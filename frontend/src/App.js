@@ -8,12 +8,12 @@ import Welcome from './components/Welcome';
 import VerifyEmail from './components/VerifyEmail';
 import PrivateRoute from './components/PrivateRoute';
 import PublicRoute from './components/PublicRoute';
-import Navbar from './components/Navbar'; // We'll create this next
+import Navbar from './components/Navbar';
 
 function App() {
   return (
     <Router>
-      <Navbar /> {/* Navigation Bar */}
+      <Navbar />
       <Routes>
         <Route
           path="/register"
@@ -43,7 +43,6 @@ function App() {
             </PrivateRoute>
           }
         />
-        {/* Add other routes as needed */}
       </Routes>
     </Router>
   );

@@ -1,62 +1,45 @@
+// Example: src/components/Navbar.js
+
 import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import useAuth from '../hooks/useAuth';
-import axiosInstance from '../utils/axiosInstance'; // Assuming you have this set up
 
 const Navbar = () => {
   const { auth, logout } = useAuth();
   const navigate = useNavigate();
 
   const handleLogout = () => {
-    logout();
-    navigate('/login');
+    try {
+      logout();
+      navigate('/login');
+    } catch (error) {
+      console.error('Logout failed:', error);
+    }
   };
 
   return (
-    <nav style={styles.navbar}>
-      <h2 style={styles.logo}>MyApp</h2>
+    <nav className="bg-gray-800 text-white px-4 py-3 flex justify-between items-center">
+      <h2 className="text-xl font-bold">Titan</h2>
       <div>
-        {!auth.isAuthenticated && (
+        {!auth.isAuthenticated ? (
           <>
-            <Link to="/login" style={styles.link}>Login</Link>
-            <Link to="/register" style={styles.link}>Register</Link>
+            <Link to="/login" className="mr-4 text-gray-300 hover:text-white">Login</Link>
+            <Link to="/register" className="text-gray-300 hover:text-white">Register</Link>
           </>
-        )}
-        {auth.isAuthenticated && (
+        ) : (
           <>
-            <Link to="/" style={styles.link}>Welcome</Link>
-            <button onClick={handleLogout} style={styles.button}>Sign Out</button>
+            <Link to="/" className="mr-4 text-gray-300 hover:text-white">Home</Link>
+            <button
+              onClick={handleLogout}
+              className="bg-red-500 hover:bg-red-600 text-white font-semibold py-1 px-3 rounded"
+            >
+              Sign Out
+            </button>
           </>
         )}
       </div>
     </nav>
   );
-};
-
-const styles = {
-  navbar: {
-    padding: '10px 20px',
-    backgroundColor: '#333',
-    color: '#fff',
-    display: 'flex',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  logo: {
-    margin: 0,
-  },
-  link: {
-    marginRight: '15px',
-    color: '#fff',
-    textDecoration: 'none',
-  },
-  button: {
-    padding: '5px 10px',
-    backgroundColor: '#555',
-    color: '#fff',
-    border: 'none',
-    cursor: 'pointer',
-  },
 };
 
 export default Navbar;
