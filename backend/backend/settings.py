@@ -29,7 +29,9 @@ SECRET_KEY = 'django-insecure-h_vd-k_a=_js2^w!tt8l6v8lh&s^)m@@xg9+e(rhu=uq6ttf@!
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = [
+    'titanapi.onrender.com'
+]
 
 
 # Application definition
