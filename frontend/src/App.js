@@ -9,6 +9,7 @@ import VerifyEmail from './components/VerifyEmail';
 import PrivateRoute from './components/PrivateRoute';
 import PublicRoute from './components/PublicRoute';
 import Navbar from './components/Navbar';
+import StockSummary from './components/StockSummary';
 
 function App() {
   return (
@@ -40,6 +41,14 @@ function App() {
           element={
             <PrivateRoute>
               <Welcome />
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="/stock/:ticker/"
+          element={
+            <PrivateRoute>
+              <StockSummary />
             </PrivateRoute>
           }
         />

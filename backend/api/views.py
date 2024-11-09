@@ -6,10 +6,12 @@ from django.contrib.auth.models import User
 from django.utils.http import urlsafe_base64_decode, urlsafe_base64_encode
 from django.utils.encoding import force_bytes, force_str
 from django.contrib.auth.tokens import default_token_generator
-from .serializers import RegisterSerializer, LoginSerializer
+from .serializers import RegisterSerializer, LoginSerializer, StockSerializer
 from .utils import send_verification_email
 from rest_framework_simplejwt.tokens import RefreshToken
-from .models import Profile
+from .models import Profile, Stock
+import yfinance as yf
+from django.db.models import Q
 
 # Registration View
 class RegisterView(generics.CreateAPIView):
@@ -71,3 +73,92 @@ class VerifyEmail(APIView):
             }, status=status.HTTP_200_OK)
         else:
             return Response({'error': 'Invalid verification link.'}, status=status.HTTP_400_BAD_REQUEST)
+
+class StockSummary(APIView):
+    def get(self, request, ticker):
+        try:
+            stock = yf.Ticker(ticker)
+            info = stock.info
+            if 'currentPrice' not in info or info['currentPrice'] is None:
+                return Response(
+                    {"valid": False, "message": "Invalid ticker symbol."},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            
+            stock_data = {
+                "valid": True,
+                "companyName": info.get("longName") or info.get("shortName"),
+                "ticker": ticker.upper(),
+                "currentPrice": info.get("currentPrice"),
+                "marketCap": info.get("marketCap"),
+                "sector": info.get("sector"),
+                "industry": info.get("industry"),
+                "exchange": info.get("exchange"),
+            }
+            
+            time_periods = {
+                "1d": "1d",
+                "5d": "5d",
+                "1mo": "1mo",
+                "3mo": "3mo",
+                "6mo": "6mo",
+                "1y": "1y",
+                "2y": "2y",
+                "5y": "5y",
+                "10y": "10y",
+                "ytd": "ytd",
+                "max": "max"
+            }
+            
+            period = request.GET.get('period', '1mo')
+            if period not in time_periods:
+                return Response(
+                    {"valid": False, "message": "Invalid time period specified."},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            
+            hist = stock.history(period=time_periods[period])
+            if hist.empty:
+                return Response(
+                    {"valid": False, "message": "No historical data available for this ticker."},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            
+            historical_data = {
+                "dates": hist.index.strftime('%Y-%m-%d').tolist(),
+                "open": hist['Open'].tolist(),
+                "high": hist['High'].tolist(),
+                "low": hist['Low'].tolist(),
+                "close": hist['Close'].tolist(),
+                "volume": hist['Volume'].tolist(),
+            }
+            
+            response_data = {
+                "stockDetails": stock_data,
+                "historicalData": historical_data,
+            }
+            
+            return Response(response_data, status=status.HTTP_200_OK)
+        
+        except Exception as e:
+            print(f"Error fetching stock data for ticker {ticker}: {e}")
+            return Response(
+                {"valid": False, "message": "An error occurred while fetching stock data."},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+
+class TickerSuggestionsAPIView(APIView):
+    def get(self, request, format=None):
+        query = request.GET.get('query', '').strip().upper()
+        if not query:
+            return Response(
+                {"error": "Query parameter is required."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        
+        stocks = Stock.objects.filter(
+            Q(ticker__icontains=query) | Q(company_name__icontains=query)
+        ).order_by('ticker')[:10]
+        
+        serializer = StockSerializer(stocks, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)

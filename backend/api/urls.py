@@ -3,7 +3,7 @@ from rest_framework_simplejwt.views import (
     TokenObtainPairView,
     TokenRefreshView,
 )
-from .views import RegisterView, LoginView, VerifyEmail
+from .views import RegisterView, LoginView, VerifyEmail, StockSummary, TickerSuggestionsAPIView
 
 urlpatterns = [
     # User Registration
@@ -20,4 +20,10 @@ urlpatterns = [
 
     # JWT Token Refresh
     path('token/refresh/', TokenRefreshView.as_view(), name='token_refresh'),
+
+    # Search Stock Ticker
+    path('search/<ticker>/', StockSummary.as_view(), name='search'),
+
+    #Ticker suggestions
+    path('tickers/', TickerSuggestionsAPIView.as_view(), name='tickers'),
 ]
