@@ -55,6 +55,9 @@ CORS_ALLOWED_ORIGINS = [
     'http://192.168.0.29:3000'
 ]
 
+# Dev environment
+CORS_ALLOW_ALL_ORIGINS = True
+
 MIDDLEWARE = [
     'corsheaders.middleware.CorsMiddleware',
     'django.middleware.security.SecurityMiddleware',
