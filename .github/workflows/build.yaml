@@ -23,7 +23,7 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v3
         with:
-          node-version: '16' # Specify the Node.js version you need
+          node-version: '18.18.0' # Specify the Node.js version you need
 
       # 3. Install dependencies in the 'frontend' directory
       - name: Install dependencies
