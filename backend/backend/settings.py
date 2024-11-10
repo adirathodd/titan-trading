@@ -30,12 +30,11 @@ SECRET_KEY = 'django-insecure-h_vd-k_a=_js2^w!tt8l6v8lh&s^)m@@xg9+e(rhu=uq6ttf@!
 DEBUG = True
 
 ALLOWED_HOSTS = [
-    'titanapi.onrender.com'
+    'titanapi.onrender.com',
+    'localhost'
 ]
 
-
 # Application definition
-
 INSTALLED_APPS = [
     'django.contrib.admin',
     'django.contrib.auth',
@@ -55,9 +54,6 @@ CORS_ALLOWED_ORIGINS = [
     'http://192.168.0.29:3000'
 ]
 
-# Dev environment
-CORS_ALLOW_ALL_ORIGINS = True
-
 MIDDLEWARE = [
     'corsheaders.middleware.CorsMiddleware',
     'django.middleware.security.SecurityMiddleware',
@@ -74,7 +70,6 @@ REST_FRAMEWORK = {
         'rest_framework_simplejwt.authentication.JWTAuthentication',
     ),
 }
-CORS_ORIGIN_ALLOW_ALL = True
 
 ROOT_URLCONF = 'backend.urls'
 
@@ -95,7 +90,6 @@ TEMPLATES = [
 ]
 
 WSGI_APPLICATION = 'backend.wsgi.application'
-
 
 # Database
 # https://docs.djangoproject.com/en/5.1/ref/settings/#databases
