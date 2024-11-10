@@ -2,7 +2,7 @@
   "name": "frontend",
   "version": "0.1.0",
   "private": true,
-  "homepage": "https://adirathodd.github.io/titan-2",
+  "homepage": "https://adirathodd.github.io/titan-2/",
   "dependencies": {
     "@craco/craco": "^7.1.0",
     "@material-tailwind/react": "^2.1.10",
