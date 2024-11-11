@@ -79,7 +79,7 @@ class StockSummary(APIView):
         try:
             stock = yf.Ticker(ticker)
             info = stock.info
-            if 'currentPrice' not in info or info['currentPrice'] is None:
+            if not (info['shortName'] and info['longName']):
                 return Response(
                     {"valid": False, "message": "Invalid ticker symbol."},
                     status=status.HTTP_400_BAD_REQUEST
@@ -87,23 +87,21 @@ class StockSummary(APIView):
             
             stock_data = {
                 "valid": True,
-                "companyName": info.get("longName") or info.get("shortName"),
+                "companyName": info.get("shortName") or info.get("longName"),
                 "ticker": ticker.upper(),
-                "currentPrice": info.get("currentPrice"),
-                "marketCap": info.get("marketCap"),
-                "sector": info.get("sector"),
-                "industry": info.get("industry"),
+                "currentPrice": info.get("currentPrice") or info.get("ask"),
+                "marketCap": info.get("marketCap") or "--",
+                "volume": info.get("volume"),
+                "sector": info.get("sector") or "--",
+                "industry": info.get("industry") or "--",
                 "exchange": info.get("exchange"),
             }
             
             time_periods = {
-                "1d": "1d",
                 "5d": "5d",
                 "1mo": "1mo",
                 "3mo": "3mo",
-                "6mo": "6mo",
                 "1y": "1y",
-                "2y": "2y",
                 "5y": "5y",
                 "10y": "10y",
                 "ytd": "ytd",
