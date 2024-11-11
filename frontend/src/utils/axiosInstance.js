@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 const axiosInstance = axios.create({
-  baseURL: 'https://titanapi.onrender.com/api/',
+  baseURL: 'httpcl://localhost:8000/api/',
 });
 
 axiosInstance.interceptors.request.use(
