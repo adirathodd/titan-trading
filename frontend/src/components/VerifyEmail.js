@@ -13,7 +13,7 @@ function VerifyEmail() {
   useEffect(() => {
     const verifyEmail = async () => {
       try {
-        const response = await axios.get(`https://titanapi.onrender.com/api/verify/${uidb64}/${token}/`);
+        const response = await axios.get(`http://localhost:8000/api/verify/${uidb64}/${token}/`);
         setMessage(response.data.message);
 
         // Store the tokens

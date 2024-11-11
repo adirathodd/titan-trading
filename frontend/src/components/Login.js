@@ -28,7 +28,7 @@ function Login() {
     setError('');
     setIsSubmitting(true);
     try {
-      const response = await axios.post('https://titanapi.onrender.com/api/login/', formData);
+      const response = await axios.post('http://localhost:8000/api/login/', formData);
       const { access, refresh } = response.data;
       login(access, refresh);
       navigate('/');

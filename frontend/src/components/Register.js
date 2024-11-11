@@ -30,7 +30,7 @@ function Register() {
     setErrors({});
     setIsSubmitting(true);
     try { // eslint-disable-next-line
-      const response = await axios.post('https://titanapi.onrender.com/api/register/', formData);
+      const response = await axios.post('http://localhost:8000/api/register/', formData);
       alert('Registration successful! Please check your email to verify your account.');
       navigate('/login');
     } catch (error) {
