@@ -91,7 +91,7 @@ const Navbar = () => {
   }, []);
 
   return (
-    <nav className="bg-gray-800 dark:bg-gray-900 text-white px-4 py-3 flex justify-between items-center">
+    <nav className="fixed top-0 left-0 w-full bg-gray-800 dark:bg-gray-900 text-white px-4 py-3 flex justify-between items-center z-50">
       <h2 className="text-xl font-bold">Titan</h2>
       <div className="flex items-center space-x-4 search-container relative">
         {!auth.isAuthenticated ? (
