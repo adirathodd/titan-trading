@@ -3,15 +3,16 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from django.contrib.auth import authenticate
 from django.contrib.auth.models import User
-from django.utils.http import urlsafe_base64_decode, urlsafe_base64_encode
-from django.utils.encoding import force_bytes, force_str
+from django.utils.http import urlsafe_base64_decode
+from django.utils.encoding import force_str
 from django.contrib.auth.tokens import default_token_generator
-from .serializers import RegisterSerializer, LoginSerializer, StockSerializer
+from .serializers import RegisterSerializer, LoginSerializer, StockSerializer, UserSerializer
 from .utils import send_verification_email
 from rest_framework_simplejwt.tokens import RefreshToken
 from .models import Profile, Stock
 import yfinance as yf
 from django.db.models import Q
+import math
 
 # Registration View
 class RegisterView(generics.CreateAPIView):
@@ -21,6 +22,7 @@ class RegisterView(generics.CreateAPIView):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         user = serializer.save()
+        Profile.objects.create(user=user)
         send_verification_email(user, request)
         return Response({"message": "User registered successfully. Please check your email to verify your account."}, status=status.HTTP_201_CREATED)
 
@@ -40,6 +42,8 @@ class LoginView(APIView):
                 return Response({
                     'refresh': str(refresh),
                     'access': str(refresh.access_token),
+                    'username': str(user.username),
+                    'cash': float(user.profile.cash)
                 }, status=status.HTTP_200_OK)
             else:
                 return Response({'error': 'Email is not verified.'}, status=status.HTTP_401_UNAUTHORIZED)
@@ -85,16 +89,21 @@ class StockSummary(APIView):
                     status=status.HTTP_400_BAD_REQUEST
                 )
             
+            def sanitize(value):
+                if isinstance(value, float) and math.isnan(value):
+                    return None
+                return value
+            
             stock_data = {
                 "valid": True,
-                "companyName": info.get("shortName") or info.get("longName"),
+                "companyName": sanitize(info.get("shortName")) or sanitize(info.get("longName")),
                 "ticker": ticker.upper(),
-                "currentPrice": info.get("currentPrice") or info.get("ask"),
-                "marketCap": info.get("marketCap") or "--",
-                "volume": info.get("volume"),
-                "sector": info.get("sector") or "--",
-                "industry": info.get("industry") or "--",
-                "exchange": info.get("exchange"),
+                "currentPrice": sanitize(info.get("currentPrice")) or sanitize(info.get("ask")) or sanitize(info.get("regularMarketPreviousClose")),
+                "marketCap": sanitize(info.get("marketCap")) or "--",
+                "volume": sanitize(info.get("volume")),
+                "sector": sanitize(info.get("sector")) or "--",
+                "industry": sanitize(info.get("industry")) or "--",
+                "exchange": sanitize(info.get("exchange")),
             }
             
             time_periods = {
@@ -124,11 +133,11 @@ class StockSummary(APIView):
             
             historical_data = {
                 "dates": hist.index.strftime('%Y-%m-%d').tolist(),
-                "open": hist['Open'].tolist(),
-                "high": hist['High'].tolist(),
-                "low": hist['Low'].tolist(),
-                "close": hist['Close'].tolist(),
-                "volume": hist['Volume'].tolist(),
+                "open": [sanitize(x) for x in hist['Open'].tolist()],
+                "high": [sanitize(x) for x in hist['High'].tolist()],
+                "low": [sanitize(x) for x in hist['Low'].tolist()],
+                "close": [sanitize(x) for x in hist['Close'].tolist()],
+                "volume": [sanitize(x) for x in hist['Volume'].tolist()],
             }
             
             response_data = {

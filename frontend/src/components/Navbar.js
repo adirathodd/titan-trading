@@ -75,8 +75,13 @@ const Navbar = () => {
     e.preventDefault();
     if (searchTerm.trim() !== '') {
       validateTicker(searchTerm.trim());
+      setShowDropdown(false);
     }
   };
+
+  const formattedCash = auth.cash
+    ? auth.cash.toLocaleString('en-US', { style: 'currency', currency: 'USD' })
+    : '$0.00';
 
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -92,7 +97,7 @@ const Navbar = () => {
 
   return (
     <nav className="fixed top-0 left-0 w-full bg-gray-800 dark:bg-gray-900 text-white px-4 py-3 flex justify-between items-center z-50">
-      <h2 className="text-xl font-bold">Titan</h2>
+      <Link to="/" className="text-2xl text-gray-350 hover:text-white">Titan</Link>
       <div className="flex items-center space-x-4 search-container relative">
         {!auth.isAuthenticated ? (
           <>
@@ -101,7 +106,7 @@ const Navbar = () => {
           </>
         ) : (
           <>
-            <Link to="/" className="text-gray-300 hover:text-white">Home</Link>
+            <span className="text-gray-300">Cash: {formattedCash}</span>
             <form onSubmit={handleSubmit} className="relative">
               <Input
                 type="search"

@@ -10,6 +10,8 @@ export const AuthProvider = ({ children }) => {
     refreshToken: localStorage.getItem('refresh_token') || null,
     isAuthenticated: false,
     user: null,
+    username: localStorage.getItem('username') || null,
+    cash: parseFloat(localStorage.getItem('cash')) || 0.00,
   });
 
   useEffect(() => {
@@ -37,25 +39,33 @@ export const AuthProvider = ({ children }) => {
     checkAuth();
   }, [auth.accessToken]);
 
-  const login = (accessToken, refreshToken) => {
+  const login = (accessToken, refreshToken, username, cash) => {
     localStorage.setItem('access_token', accessToken);
     localStorage.setItem('refresh_token', refreshToken);
+    localStorage.setItem('username', username);
+    localStorage.setItem('cash', cash);
     setAuth({
       accessToken,
       refreshToken,
       isAuthenticated: true,
       user: jwtDecode(accessToken),
+      username: username,
+      cash: cash
     });
   };
 
   const logout = () => {
     localStorage.removeItem('access_token');
     localStorage.removeItem('refresh_token');
+    localStorage.removeItem('username');
+    localStorage.removeItem('cash');
     setAuth({
       accessToken: null,
       refreshToken: null,
       isAuthenticated: false,
       user: null,
+      username: null,
+      cash: null
     });
     delete axios.defaults.headers.common['Authorization'];
   };
