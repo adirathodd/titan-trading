@@ -2,7 +2,7 @@ from rest_framework import serializers
 from django.contrib.auth.models import User
 from django.contrib.auth.password_validation import validate_password
 from rest_framework.validators import UniqueValidator
-from .models import Stock, Profile
+from .models import Stock, Profile, Holding, Transaction
 
 class RegisterSerializer(serializers.ModelSerializer):
     username = serializers.CharField(
@@ -52,7 +52,21 @@ class LoginSerializer(serializers.Serializer):
 class StockSerializer(serializers.ModelSerializer):
     class Meta:
         model = Stock
-        fields = ['ticker', 'company_name']
+        fields = ['ticker', 'name', 'current_price']
+
+class HoldingSerializer(serializers.ModelSerializer):
+    stock = StockSerializer()
+
+    class Meta:
+        model = Holding
+        fields = ['stock', 'shares_owned']
+
+class TransactionSerializer(serializers.ModelSerializer):
+    stock = StockSerializer()
+
+    class Meta:
+        model = Transaction
+        fields = ['stock', 'transaction_type', 'quantity', 'price_per_share', 'total_amount', 'timestamp']
 
 class ProfileSerializer(serializers.ModelSerializer):
     class Meta:
