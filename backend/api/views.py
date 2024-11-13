@@ -6,12 +6,14 @@ from django.contrib.auth.models import User
 from django.utils.http import urlsafe_base64_decode
 from django.utils.encoding import force_str
 from django.contrib.auth.tokens import default_token_generator
-from .serializers import RegisterSerializer, LoginSerializer, StockSerializer, UserSerializer
+from .serializers import RegisterSerializer, LoginSerializer, StockSerializer
 from .utils import send_verification_email
 from rest_framework_simplejwt.tokens import RefreshToken
-from .models import Profile, Stock
+from .models import Profile, Stock, Holding, Transaction
 import yfinance as yf
 from django.db.models import Q
+from decimal import Decimal
+from django.db import transaction as db_transaction
 import math
 
 # Registration View
@@ -169,3 +171,89 @@ class TickerSuggestionsAPIView(APIView):
         
         serializer = StockSerializer(stocks, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
+
+# Buy Stock View
+class BuyStockView(APIView):
+    def post(self, request, ticker):
+        user = request.user
+        quantity = Decimal(request.data.get('quantity'))
+        
+        stock = generics.get_object_or_404(Stock, ticker=ticker.upper())
+        
+        try:
+            stock.update_current_price()
+        except ValueError as e:
+            return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+        
+        total_cost = quantity * stock.current_price
+        
+        with db_transaction.atomic():
+            # Check if user has enough cash
+            if user.profile.cash < total_cost:
+                return Response({'error': 'Insufficient balance.'}, status=status.HTTP_400_BAD_REQUEST)
+            
+            # Deduct cash
+            user.profile.cash -= total_cost
+            user.profile.save()
+            
+            # Update or create holding
+            holding, created = Holding.objects.get_or_create(user=user, stock=stock)
+            holding.shares_owned += quantity
+            holding.save()
+            
+            # Record transaction
+            Transaction.objects.create(
+                user=user,
+                stock=stock,
+                transaction_type='BUY',
+                quantity=quantity,
+                price_per_share=stock.current_price,
+                total_amount=total_cost
+            )
+        
+        return Response({'message': 'Stock purchased successfully.', 'cash_remaining': user.profile.cash}, status=status.HTTP_200_OK)
+
+# Sell Stock View
+class SellStockView(APIView):
+    def post(self, request, ticker):
+        user = request.user
+        quantity = Decimal(request.data.get('quantity'))
+        
+        stock = generics.get_object_or_404(Stock, ticker=ticker.upper())
+        
+        try:
+            # Update the stock's current price
+            stock.update_current_price()
+        except ValueError as e:
+            return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+        
+        total_revenue = quantity * stock.current_price
+        
+        with db_transaction.atomic():
+            # Check if user has enough shares
+            holding = generics.get_object_or_404(Holding, user=user, stock=stock)
+            if holding.shares_owned < quantity:
+                return Response({'error': 'Insufficient shares to sell.'}, status=status.HTTP_400_BAD_REQUEST)
+            
+            # Add cash
+            user.profile.cash += total_revenue
+            user.profile.save()
+            
+            # Update holding
+            holding.shares_owned -= quantity
+            if holding.shares_owned == 0:
+                holding.delete()
+            else:
+                holding.save()
+            
+            # Record transaction
+            Transaction.objects.create(
+                user=user,
+                stock=stock,
+                transaction_type='SELL',
+                quantity=quantity,
+                price_per_share=stock.current_price,
+                total_amount=total_revenue
+            )
+        
+        return Response({'message': 'Stock sold successfully.', 'cash_total': user.profile.cash}, status=status.HTTP_200_OK)

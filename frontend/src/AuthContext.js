@@ -65,13 +65,18 @@ export const AuthProvider = ({ children }) => {
       isAuthenticated: false,
       user: null,
       username: null,
-      cash: null
+      cash: 0.00
     });
     delete axios.defaults.headers.common['Authorization'];
   };
 
+  const updateCash = (newCash) => {
+    localStorage.setItem('cash', newCash);
+    setAuth((prev) => ({ ...prev, cash: newCash }));
+  };
+
   return (
-    <AuthContext.Provider value={{ auth, login, logout }}>
+    <AuthContext.Provider value={{ auth, login, logout, updateCash }}>
       {children}
     </AuthContext.Provider>
   );

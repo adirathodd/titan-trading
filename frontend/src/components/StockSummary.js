@@ -3,6 +3,7 @@ import { useParams } from 'react-router-dom';
 import axiosInstance from '../utils/axiosInstance';
 import { Line } from 'react-chartjs-2';
 import TimePeriodSelector from './TimePeriodSelector.js';
+import useAuth from '../hooks/useAuth';
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -43,9 +44,13 @@ const formatNum = (value) => {
 const StockSummary = () => {
   const { ticker } = useParams();
   const [stockData, setStockData] = useState(null);
+  const [buyQuantity, setBuyQuantity] = useState('');
+  const [sellQuantity, setSellQuantity] = useState('');
+  const [message, setMessage] = useState(null);
   const [error, setError] = useState('');
   const [selectedPeriod, setSelectedPeriod] = useState('1mo');
   const [historicalData, setHistoricalData] = useState(null);
+  const { auth, updateCash } = useAuth();
 
   useEffect(() => {
     const fetchStockData = async () => {
@@ -73,6 +78,46 @@ const StockSummary = () => {
 
   const handlePeriodChange = (e) => {
     setSelectedPeriod(e);
+  };
+
+  const handleBuy = async (e) => {
+    e.preventDefault();
+    setMessage(null);
+    setError(null);
+    if (!buyQuantity || isNaN(buyQuantity) || Number(buyQuantity) <= 0) {
+      setError('Please enter a valid quantity to buy.');
+      return;
+    }
+
+    try {
+      const response = await axiosInstance.post(`/buy-stock/${ticker}/`, {
+        quantity: buyQuantity,
+      });
+      setMessage(response.data.message);
+      updateCash(response.data.cash_remaining);
+    } catch (err) {
+      setError(err.response?.data?.error || 'Failed to buy stock.');
+    }
+  };
+
+  const handleSell = async (e) => {
+    e.preventDefault();
+    setMessage(null);
+    setError(null);
+    if (!sellQuantity || isNaN(sellQuantity) || Number(sellQuantity) <= 0) {
+      setError('Please enter a valid quantity to sell.');
+      return;
+    }
+
+    try {
+      const response = await axiosInstance.post(`/sell-stock/${ticker}/`, {
+        quantity: sellQuantity,
+      });
+      setMessage(response.data.message);
+      updateCash(response.data.cash_total);
+    } catch (err) {
+      setError(err.response?.data?.error || 'Failed to sell stock.');
+    }
   };
 
   if (error) {
@@ -178,7 +223,52 @@ const StockSummary = () => {
         <span className="text-lg font-semibold text-gray-900 dark:text-white">
           {formatNum(stockData.volume)}
         </span>
-      </div>      
+      </div>  
+      
+      {/* Buy Stock Form */}
+      <div className="mb-6">
+        <h3 className="text-2xl font-semibold mb-2">Buy Stock</h3>
+        <form onSubmit={handleBuy} className="flex items-center">
+          <input
+            type="number"
+            step="0.0001"
+            min="0"
+            value={buyQuantity}
+            onChange={(e) => setBuyQuantity(e.target.value)}
+            placeholder="Quantity"
+            className="border p-2 mr-4 rounded-md w-32"
+            required
+          />
+          <button type="submit" className="bg-green-500 text-white px-4 py-2 rounded-md hover:bg-green-600">
+            Buy
+          </button>
+        </form>
+      </div>
+
+      {/* Sell Stock Form */}
+      <div className="mb-6">
+        <h3 className="text-2xl font-semibold mb-2">Sell Stock</h3>
+        <form onSubmit={handleSell} className="flex items-center">
+          <input
+            type="number"
+            step="0.0001"
+            min="0"
+            value={sellQuantity}
+            onChange={(e) => setSellQuantity(e.target.value)}
+            placeholder="Quantity"
+            className="border p-2 mr-4 rounded-md w-32"
+            required
+          />
+          <button type="submit" className="bg-red-500 text-white px-4 py-2 rounded-md hover:bg-red-600">
+            Sell
+          </button>
+        </form>
+      </div>
+
+      {/* Success or Error Message */}
+      {message && <div className="text-green-500 mb-4">{message}</div>}
+      {error && <div className="text-red-500 mb-4">{error}</div>}
+
       <div>
         <Line data={chartData} options={options} />
       </div>

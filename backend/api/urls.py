@@ -3,7 +3,7 @@ from rest_framework_simplejwt.views import (
     TokenObtainPairView,
     TokenRefreshView,
 )
-from .views import RegisterView, LoginView, VerifyEmail, StockSummary, TickerSuggestionsAPIView
+from .views import RegisterView, LoginView, VerifyEmail, StockSummary, TickerSuggestionsAPIView, BuyStockView, SellStockView
 
 urlpatterns = [
     # User Registration
@@ -26,4 +26,8 @@ urlpatterns = [
 
     #Ticker suggestions
     path('tickers/', TickerSuggestionsAPIView.as_view(), name='tickers'),
+
+    # Transactions
+    path('buy-stock/<str:ticker>/', BuyStockView.as_view(), name='buy-stock'),
+    path('sell-stock/<str:ticker>/', SellStockView.as_view(), name='sell-stock'),
 ]
