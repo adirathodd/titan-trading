@@ -46,6 +46,7 @@ class Holding(models.Model):
     shares_owned = models.DecimalField(
         max_digits=12,
         decimal_places=4,
+        default=Decimal(0.0000),
         validators=[MinValueValidator(Decimal('0.0000'))],
         help_text="Number of shares owned."
     )
