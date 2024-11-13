@@ -52,7 +52,7 @@ class LoginSerializer(serializers.Serializer):
 class StockSerializer(serializers.ModelSerializer):
     class Meta:
         model = Stock
-        fields = ['ticker', 'name', 'current_price']
+        fields = ['ticker', 'company_name', 'current_price']
 
 class HoldingSerializer(serializers.ModelSerializer):
     stock = StockSerializer()

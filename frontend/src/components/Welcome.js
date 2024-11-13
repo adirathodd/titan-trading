@@ -2,6 +2,7 @@ import React from 'react';
 import useAuth from '../hooks/useAuth';
 
 function Welcome() {
+  // eslint-disable-next-line
   const { auth } = useAuth();
   
   return (

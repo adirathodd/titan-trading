@@ -47,10 +47,13 @@ const StockSummary = () => {
   const [buyQuantity, setBuyQuantity] = useState('');
   const [sellQuantity, setSellQuantity] = useState('');
   const [message, setMessage] = useState(null);
+  const [currentHoldings, setCurrentHoldings] = useState(0);
   const [error, setError] = useState('');
   const [selectedPeriod, setSelectedPeriod] = useState('1mo');
-  const [historicalData, setHistoricalData] = useState(null);
-  const { auth, updateCash } = useAuth();
+  const [historicalData, setHistoricalData] = useState(null); 
+  const { updateCash } = useAuth();
+  const [showError, setShowError] = useState(false);
+  const [showMessage, setShowMessage] = useState(false);
 
   useEffect(() => {
     const fetchStockData = async () => {
@@ -62,6 +65,7 @@ const StockSummary = () => {
           setStockData(response.data.stockDetails);
           setHistoricalData(response.data.historicalData);
           setError('');
+          setCurrentHoldings(response.data.currentHoldings);
         } else {
           setError(response.data.message || 'Invalid ticker symbol.');
         }
@@ -75,6 +79,42 @@ const StockSummary = () => {
       fetchStockData();
     }
   }, [ticker, selectedPeriod]);
+
+  useEffect(() => {
+    if (error) {
+      setShowError(true);
+      const timer1 = setTimeout(() => {
+        setShowError(false);
+      }, 4500); // Start fade-out at 4.5 seconds
+  
+      const timer2 = setTimeout(() => {
+        setError('');
+      }, 5000); // Remove message at 5 seconds
+  
+      return () => {
+        clearTimeout(timer1);
+        clearTimeout(timer2);
+      };
+    }
+  }, [error]);
+  
+  useEffect(() => {
+    if (message) {
+      setShowMessage(true);
+      const timer1 = setTimeout(() => {
+        setShowMessage(false);
+      }, 4500);
+  
+      const timer2 = setTimeout(() => {
+        setMessage('');
+      }, 5000);
+  
+      return () => {
+        clearTimeout(timer1);
+        clearTimeout(timer2);
+      };
+    }
+  }, [message]);
 
   const handlePeriodChange = (e) => {
     setSelectedPeriod(e);
@@ -95,6 +135,8 @@ const StockSummary = () => {
       });
       setMessage(response.data.message);
       updateCash(response.data.cash_remaining);
+      setCurrentHoldings((prevHoldings) => prevHoldings + parseFloat(buyQuantity));
+      setBuyQuantity('');
     } catch (err) {
       setError(err.response?.data?.error || 'Failed to buy stock.');
     }
@@ -104,8 +146,13 @@ const StockSummary = () => {
     e.preventDefault();
     setMessage(null);
     setError(null);
-    if (!sellQuantity || isNaN(sellQuantity) || Number(sellQuantity) <= 0) {
+    if (!sellQuantity || isNaN(sellQuantity) || parseFloat(sellQuantity) <= 0) {
       setError('Please enter a valid quantity to sell.');
+      return;
+    }
+
+    if (parseFloat(sellQuantity) > currentHoldings){
+      setError('You do not have enough shares to sell.');
       return;
     }
 
@@ -115,19 +162,12 @@ const StockSummary = () => {
       });
       setMessage(response.data.message);
       updateCash(response.data.cash_total);
+      setCurrentHoldings((prevHoldings) => prevHoldings - parseFloat(sellQuantity));
+      setSellQuantity('');
     } catch (err) {
       setError(err.response?.data?.error || 'Failed to sell stock.');
     }
   };
-
-  if (error) {
-    return (
-      <div className="max-w-2xl mx-auto mt-20 p-6 bg-white dark:bg-gray-800 shadow-md rounded">
-        <h2 className="text-2xl font-bold mb-4 text-gray-900 dark:text-white">Error</h2>
-        <p className="text-gray-700 dark:text-gray-300">{error}</p>
-      </div>
-    );
-  }
 
   if (!stockData || !historicalData) {
     return (
@@ -203,6 +243,28 @@ const StockSummary = () => {
 
   return (
     <div className="max-w-4xl mx-auto mt-20 p-6 bg-white dark:bg-gray-800 shadow-md rounded">
+      {/* Error Message */}
+      {error && (
+        <div
+          className={`mb-4 p-4 bg-red-100 text-red-700 rounded transition-opacity duration-500 ${
+            showError ? 'opacity-100' : 'opacity-0'
+          }`}
+        >
+          {error}
+        </div>
+      )}
+
+      {/* Success Message */}
+      {message && (
+        <div
+          className={`mb-4 p-4 bg-green-100 text-green-700 rounded transition-opacity duration-500 ${
+            showMessage ? 'opacity-100' : 'opacity-0'
+          }`}
+        >
+          {message}
+        </div>
+      )}
+
       <h2 className="text-3xl font-bold mb-6 text-gray-900 dark:text-white">
         {stockData.companyName} ({stockData.ticker})
       </h2>
@@ -227,19 +289,18 @@ const StockSummary = () => {
       
       {/* Buy Stock Form */}
       <div className="mb-6">
-        <h3 className="text-2xl font-semibold mb-2">Buy Stock</h3>
         <form onSubmit={handleBuy} className="flex items-center">
           <input
             type="number"
-            step="0.0001"
+            step="0.001"
             min="0"
             value={buyQuantity}
             onChange={(e) => setBuyQuantity(e.target.value)}
             placeholder="Quantity"
-            className="border p-2 mr-4 rounded-md w-32"
+            className="border p-2 mr-4 rounded-md w-32 text-black"
             required
           />
-          <button type="submit" className="bg-green-500 text-white px-4 py-2 rounded-md hover:bg-green-600">
+          <button type="submit" className="bg-green-600 text-black px-4 py-2 rounded-md hover:bg-green-800">
             Buy
           </button>
         </form>
@@ -247,27 +308,30 @@ const StockSummary = () => {
 
       {/* Sell Stock Form */}
       <div className="mb-6">
-        <h3 className="text-2xl font-semibold mb-2">Sell Stock</h3>
         <form onSubmit={handleSell} className="flex items-center">
           <input
             type="number"
-            step="0.0001"
+            step="0.001"
             min="0"
+            max={currentHoldings}
             value={sellQuantity}
             onChange={(e) => setSellQuantity(e.target.value)}
             placeholder="Quantity"
-            className="border p-2 mr-4 rounded-md w-32"
+            className="border p-2 mr-4 rounded-md w-32 text-black"
             required
           />
-          <button type="submit" className="bg-red-500 text-white px-4 py-2 rounded-md hover:bg-red-600">
+          <button type="submit" className="bg-red-600 text-black px-4 py-2 rounded-md hover:bg-red-800">
             Sell
           </button>
         </form>
       </div>
 
-      {/* Success or Error Message */}
-      {message && <div className="text-green-500 mb-4">{message}</div>}
-      {error && <div className="text-red-500 mb-4">{error}</div>}
+      {/* Current Holdings */}
+      <div className="mb-6">
+        <p className="text-lg">
+          <strong>Shares Owned:</strong> {currentHoldings}
+        </p>
+      </div>
 
       <div>
         <Line data={chartData} options={options} />

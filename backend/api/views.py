@@ -1,3 +1,5 @@
+from django.shortcuts import get_object_or_404
+from rest_framework.permissions import IsAuthenticated
 from rest_framework import generics, status
 from rest_framework.views import APIView
 from rest_framework.response import Response
@@ -85,7 +87,7 @@ class StockSummary(APIView):
         try:
             stock = yf.Ticker(ticker)
             info = stock.info
-            if not (info['shortName'] and info['longName']):
+            if not (info['shortName'] or info['longName']):
                 return Response(
                     {"valid": False, "message": "Invalid ticker symbol."},
                     status=status.HTTP_400_BAD_REQUEST
@@ -141,14 +143,25 @@ class StockSummary(APIView):
                 "close": [sanitize(x) for x in hist['Close'].tolist()],
                 "volume": [sanitize(x) for x in hist['Volume'].tolist()],
             }
+
+            # Get current holdings of the stock if any
+            user = request.user
+            stockObj = Stock.objects.get(ticker=ticker.upper())
+
+            try:
+                holding = Holding.objects.get(user=user.pk, stock=stockObj.pk)
+                holdings = holding.shares_owned
+            except Holding.DoesNotExist:
+                holdings = 0
             
             response_data = {
                 "stockDetails": stock_data,
                 "historicalData": historical_data,
+                "currentHoldings": holdings
             }
             
             return Response(response_data, status=status.HTTP_200_OK)
-        
+
         except Exception as e:
             print(f"Error fetching stock data for ticker {ticker}: {e}")
             return Response(
@@ -177,30 +190,33 @@ class BuyStockView(APIView):
     def post(self, request, ticker):
         user = request.user
         quantity = Decimal(request.data.get('quantity'))
-        
+
         stock = generics.get_object_or_404(Stock, ticker=ticker.upper())
-        
         try:
             stock.update_current_price()
         except ValueError as e:
             return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
-        
+
         total_cost = quantity * stock.current_price
-        
+
         with db_transaction.atomic():
             # Check if user has enough cash
             if user.profile.cash < total_cost:
                 return Response({'error': 'Insufficient balance.'}, status=status.HTTP_400_BAD_REQUEST)
-            
+
             # Deduct cash
             user.profile.cash -= total_cost
             user.profile.save()
-            
+
             # Update or create holding
-            holding, created = Holding.objects.get_or_create(user=user, stock=stock)
+            holding, created = Holding.objects.get_or_create(
+                user=user,
+                stock=stock,
+                defaults={'shares_owned': Decimal('0.0000')}
+            )
             holding.shares_owned += quantity
             holding.save()
-            
+
             # Record transaction
             Transaction.objects.create(
                 user=user,
@@ -210,7 +226,7 @@ class BuyStockView(APIView):
                 price_per_share=stock.current_price,
                 total_amount=total_cost
             )
-        
+
         return Response({'message': 'Stock purchased successfully.', 'cash_remaining': user.profile.cash}, status=status.HTTP_200_OK)
 
 # Sell Stock View
@@ -218,34 +234,34 @@ class SellStockView(APIView):
     def post(self, request, ticker):
         user = request.user
         quantity = Decimal(request.data.get('quantity'))
-        
+
         stock = generics.get_object_or_404(Stock, ticker=ticker.upper())
-        
+
         try:
             # Update the stock's current price
             stock.update_current_price()
         except ValueError as e:
             return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
-        
+
         total_revenue = quantity * stock.current_price
-        
+
         with db_transaction.atomic():
             # Check if user has enough shares
             holding = generics.get_object_or_404(Holding, user=user, stock=stock)
             if holding.shares_owned < quantity:
                 return Response({'error': 'Insufficient shares to sell.'}, status=status.HTTP_400_BAD_REQUEST)
-            
+
             # Add cash
             user.profile.cash += total_revenue
             user.profile.save()
-            
+
             # Update holding
             holding.shares_owned -= quantity
             if holding.shares_owned == 0:
                 holding.delete()
             else:
                 holding.save()
-            
+
             # Record transaction
             Transaction.objects.create(
                 user=user,
@@ -255,5 +271,5 @@ class SellStockView(APIView):
                 price_per_share=stock.current_price,
                 total_amount=total_revenue
             )
-        
+
         return Response({'message': 'Stock sold successfully.', 'cash_total': user.profile.cash}, status=status.HTTP_200_OK)
