@@ -29,8 +29,8 @@ function Login() {
     setIsSubmitting(true);
     try {
       const response = await axios.post('http://localhost:8000/api/login/', formData);
-      const { access, refresh } = response.data;
-      login(access, refresh);
+      const { access, refresh, username, cash } = response.data;
+      login(access, refresh, username, cash );
       navigate('/');
     } catch (error) {
       if (error.response && error.response.data) {

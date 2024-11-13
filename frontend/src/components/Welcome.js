@@ -5,7 +5,6 @@ import useAuth from '../hooks/useAuth';
 
 function Welcome() {
   const { auth } = useAuth();
-  console.log(auth);
   
   return (
     <div className="max-w-lg mx-auto mt-20 p-6 bg-white dark:bg-gray-800 shadow-md rounded text-center">
