@@ -85,11 +85,11 @@ const StockSummary = () => {
       setShowError(true);
       const timer1 = setTimeout(() => {
         setShowError(false);
-      }, 4500); // Start fade-out at 4.5 seconds
+      }, 4500);
   
       const timer2 = setTimeout(() => {
         setError('');
-      }, 5000); // Remove message at 5 seconds
+      }, 5000);
   
       return () => {
         clearTimeout(timer1);
@@ -265,77 +265,99 @@ const StockSummary = () => {
         </div>
       )}
 
-      <h2 className="text-3xl font-bold mb-6 text-gray-900 dark:text-white">
-        {stockData.companyName} ({stockData.ticker})
-      </h2>
-      <div className="mb-3">
-        <span className="text-lg text-gray-700 dark:text-gray-300">Current Price: </span>
-        <span className="text-lg font-semibold text-gray-900 dark:text-white">
-          ${stockData.currentPrice}
-        </span>
-      </div>
-      <div className="mb-3">
-        <span className="text-lg text-gray-700 dark:text-gray-300">Market Cap: </span>
-        <span className="text-lg font-semibold text-gray-900 dark:text-white">
-          {formatNum(stockData.marketCap)}
-        </span>
-      </div>
-      <div className="mb-3">
-        <span className="text-lg text-gray-700 dark:text-gray-300">Volume: </span>
-        <span className="text-lg font-semibold text-gray-900 dark:text-white">
-          {formatNum(stockData.volume)}
-        </span>
-      </div>  
-      
-      {/* Buy Stock Form */}
-      <div className="mb-6">
-        <form onSubmit={handleBuy} className="flex items-center">
-          <input
-            type="number"
-            step="0.001"
-            min="0"
-            value={buyQuantity}
-            onChange={(e) => setBuyQuantity(e.target.value)}
-            placeholder="Quantity"
-            className="border p-2 mr-4 rounded-md w-32 text-black"
-            required
-          />
-          <button type="submit" className="bg-green-600 text-black px-4 py-2 rounded-md hover:bg-green-800">
-            Buy
-          </button>
-        </form>
+      {/* Flex Container for Company Info and Forms */}
+      <div className="flex flex-col md:flex-row justify-between items-start mb-6">
+        {/* Left Section: Company Information */}
+        <div className="md:w-2/3">
+          <h2 className="text-3xl font-bold mb-6 text-gray-900 dark:text-white">
+            {stockData.companyName} ({stockData.ticker})
+          </h2>
+          <div className="mb-3">
+            <span className="text-lg text-gray-700 dark:text-gray-300">Current Price: </span>
+            <span className="text-lg font-semibold text-gray-900 dark:text-white">
+              {formatNum(stockData.currentPrice)}
+            </span>
+          </div>
+          <div className="mb-3">
+            <span className="text-lg text-gray-700 dark:text-gray-300">Market Cap: </span>
+            <span className="text-lg font-semibold text-gray-900 dark:text-white">
+              {formatNum(stockData.marketCap)}
+            </span>
+          </div>
+          <div className="mb-3">
+            <span className="text-lg text-gray-700 dark:text-gray-300">Volume: </span>
+            <span className="text-lg font-semibold text-gray-900 dark:text-white">
+              {formatNum(stockData.volume)}
+            </span>
+          </div>
+        </div>
+
+        <div className="md:w-7/10 mt-10 md:mt-8">
+          <div className="mb-10">
+            <form onSubmit={handleBuy} className="flex items-center">
+              <label htmlFor="buyQuantity" className="sr-only">Buy Quantity</label>
+              <input
+                id="buyQuantity"
+                type="number"
+                step="0.001"
+                min="0"
+                value={buyQuantity}
+                onChange={(e) => setBuyQuantity(e.target.value)}
+                placeholder="Quantity"
+                className="border p-2 mr-4 rounded-md w-24 text-black placeholder-black"
+                required
+              />
+              <button
+                type="submit"
+                className="bg-green-700 text-white px-4 py-2 rounded-md hover:bg-green-800 transition-opacity duration-300"
+              >
+                Buy
+              </button>
+            </form>
+          </div>
+
+          {/* Sell Stock Form */}
+          <div className="mb-4">
+            <form onSubmit={handleSell} className="flex items-center">
+              <label htmlFor="sellQuantity" className="sr-only">Sell Quantity</label>
+              <input
+                id="sellQuantity"
+                type="number"
+                step="0.001"
+                min="0"
+                max={currentHoldings}
+                value={sellQuantity}
+                onChange={(e) => setSellQuantity(e.target.value)}
+                placeholder="Quantity"
+                className="border p-2 mr-4 rounded-md w-24 text-black placeholder-black"
+                required
+              />
+              <button
+                type="submit"
+                className="bg-red-700 text-white px-4 py-2 rounded-md hover:bg-red-800 transition-opacity duration-300"
+              >
+                Sell
+              </button>
+            </form>
+          </div>
+          
+          {/* Current Holdings */}
+          <div className="mb-6">
+            <p className="text-lg">
+              <strong>Shares Owned:</strong> {currentHoldings}
+            </p>
+          </div>
+        </div>
       </div>
 
-      {/* Sell Stock Form */}
-      <div className="mb-6">
-        <form onSubmit={handleSell} className="flex items-center">
-          <input
-            type="number"
-            step="0.001"
-            min="0"
-            max={currentHoldings}
-            value={sellQuantity}
-            onChange={(e) => setSellQuantity(e.target.value)}
-            placeholder="Quantity"
-            className="border p-2 mr-4 rounded-md w-32 text-black"
-            required
-          />
-          <button type="submit" className="bg-red-600 text-black px-4 py-2 rounded-md hover:bg-red-800">
-            Sell
-          </button>
-        </form>
-      </div>
+      {/* Historical Data Chart */}
+      {historicalData && (
+        <div>
+          <Line data={chartData} options={options} />
+        </div>
+      )}
 
-      {/* Current Holdings */}
-      <div className="mb-6">
-        <p className="text-lg">
-          <strong>Shares Owned:</strong> {currentHoldings}
-        </p>
-      </div>
-
-      <div>
-        <Line data={chartData} options={options} />
-      </div>
+      {/* Time Period Selector */}
       <div className="p-4">
         <TimePeriodSelector selectedPeriod={selectedPeriod} onSelectPeriod={handlePeriodChange} />
       </div>
