@@ -1,16 +1,38 @@
 # accounts/utils.py
-from django.core.mail import send_mail
+
+from django.core.mail import EmailMultiAlternatives
 from django.conf import settings
 from django.urls import reverse
 from django.contrib.sites.shortcuts import get_current_site
 from django.utils.http import urlsafe_base64_encode
 from django.utils.encoding import force_bytes
 from django.contrib.auth.tokens import default_token_generator
+from django.template.loader import render_to_string
+from django.utils import timezone
+from datetime import datetime
 
 def send_verification_email(user, request):
     token = default_token_generator.make_token(user)
     uid = urlsafe_base64_encode(force_bytes(user.pk))
     verification_link = f"http://localhost:3000/verify/{uid}/{token}/"
-    subject = 'Verify your email'
-    message = f'Hey {user.username},\n\nPlease verify your email by clicking the link below:\n{verification_link}'
-    send_mail(subject, message, settings.EMAIL_HOST_USER, [user.email])
+    
+    subject = 'Verify Your Email'
+    from_email = 'Titan Paper Trading Platform <no-reply@titan.com>'  # Replace with your domain
+    to_email = user.email
+    
+    # Current year for the footer
+    current_year = datetime.now().year
+    
+    # Render HTML content
+    html_content = render_to_string('api/verification_email.html', {
+        'user': user,
+        'verification_link': verification_link,
+        'current_year': current_year,
+    })
+    
+    # Create the email
+    email = EmailMultiAlternatives(subject, '', from_email, [to_email])
+    email.attach_alternative(html_content, "text/html")
+    
+    # Send the email
+    email.send()
