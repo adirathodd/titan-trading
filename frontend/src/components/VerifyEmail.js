@@ -15,15 +15,9 @@ function VerifyEmail() {
       try {
         const response = await axios.get(`http://localhost:8000/api/verify/${uidb64}/${token}/`);
         setMessage(response.data.message);
-
-        // Store the tokens
-        const { access, refresh } = response.data;
-        login(access, refresh);
-
-        // Redirect to welcome page after a short delay
         setTimeout(() => {
-          navigate('/welcome');
-        }, 2000); // 2-second delay to show the success message
+          navigate('/');
+        }, 2000);
       } catch (error) {
         setMessage(error.response?.data?.error || 'Verification failed.');
       }

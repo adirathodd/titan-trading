@@ -46,6 +46,7 @@ INSTALLED_APPS = [
     'rest_framework',
     'api',
     'corsheaders',
+    'django_crontab',
     'rest_framework.authtoken'
 ]
 
@@ -120,6 +121,9 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
+CRONJOBS = [
+    ('0 0 * * *', 'api.management.commands.update_portfolio_history.Command'),
+]
 
 # Internationalization
 # https://docs.djangoproject.com/en/5.1/topics/i18n/

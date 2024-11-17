@@ -40,24 +40,6 @@ class Profile(models.Model):
     def __str__(self):
         return f"{self.user.username}'s profile"
 
-class Holding(models.Model):
-    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='holdings')
-    stock = models.ForeignKey(Stock, on_delete=models.CASCADE, related_name='holdings')
-    shares_owned = models.DecimalField(
-        max_digits=12,
-        decimal_places=4,
-        default=Decimal(0.0000),
-        validators=[MinValueValidator(Decimal('0.0000'))],
-        help_text="Number of shares owned."
-    )
-
-    class Meta:
-        unique_together = ('user', 'stock')
-
-    def __str__(self):
-        return f"{self.user.username} owns {self.shares_owned} shares of {self.stock.ticker}"
-
-
 class Transaction(models.Model):
     TRANSACTION_TYPES = (
         ('BUY', 'Buy'),
@@ -93,3 +75,43 @@ class Transaction(models.Model):
 
     def __str__(self):
         return f"{self.transaction_type} {self.quantity} shares of {self.stock.ticker} by {self.user.username} on {self.timestamp.strftime('%Y-%m-%d %H:%M:%S')}"
+
+class Holding(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='holdings')
+    ticker = models.ForeignKey(Stock, on_delete=models.CASCADE, related_name='holdings')
+    company_name = models.CharField(max_length=100)
+    shares_owned = models.DecimalField(
+        max_digits=12,
+        decimal_places=4,
+        default=Decimal(0.0000),
+        validators=[MinValueValidator(Decimal('0.0000'))],
+        help_text="Number of shares owned."
+    )
+    average_price = models.DecimalField(max_digits=20, decimal_places=2)
+
+    def current_price(self):
+        import yfinance as yf
+        ticker_data = yf.Ticker(self.ticker.ticker)
+        latest_price = ticker_data.info.get('currentPrice') or ticker_data.info.get('ask') or ticker_data.info.get('regularMarketPreviousClose')
+        if latest_price is not None:
+            return float(latest_price)
+        else:
+            raise ValueError(f"Could not fetch latest price for ticker {self.ticker}")
+
+    def total_value(self):
+        return float(self.shares_owned) * self.current_price()
+
+    class Meta:
+        unique_together = ('user', 'ticker')
+
+    def __str__(self):
+        return f"{self.user.username} owns {self.shares_owned} shares of {self.stock.ticker}"
+
+class PortfolioHistory(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='portfolio_history')
+    date = models.DateField()
+    total_value = models.DecimalField(max_digits=20, decimal_places=2)
+
+    class Meta:
+        ordering = ['date']
+        unique_together = ('user', 'date')

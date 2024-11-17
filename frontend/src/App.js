@@ -2,12 +2,12 @@ import React from 'react';
 import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
 import Register from './components/Register';
 import Login from './components/Login';
-import Welcome from './components/Welcome';
 import VerifyEmail from './components/VerifyEmail';
 import PrivateRoute from './components/PrivateRoute';
 import PublicRoute from './components/PublicRoute';
 import Navbar from './components/Navbar';
 import StockSummary from './components/StockSummary';
+import Dashboard from './components/Dashboard';
 
 function App() {
   return (
@@ -38,7 +38,7 @@ function App() {
           path="/"
           element={
             <PrivateRoute>
-              <Welcome />
+              <Dashboard />
             </PrivateRoute>
           }
         />

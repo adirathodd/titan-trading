@@ -3,7 +3,7 @@ from rest_framework_simplejwt.views import (
     TokenObtainPairView,
     TokenRefreshView,
 )
-from .views import RegisterView, LoginView, VerifyEmail, StockSummary, TickerSuggestionsAPIView, BuyStockView, SellStockView
+from .views import *
 
 urlpatterns = [
     # User Registration
@@ -11,6 +11,9 @@ urlpatterns = [
 
     # User Login
     path('login/', LoginView.as_view(), name='login'),
+
+    # User Dashboard
+    path('dashboard/', DashboardView.as_view(), name='dashboard'),
 
     # Email Verification
     path('verify/<uidb64>/<token>/', VerifyEmail.as_view(), name='verify-email'),
