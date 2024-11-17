@@ -30,17 +30,11 @@ class RegisterSerializer(serializers.ModelSerializer):
         fields = ('username', 'email', 'password', 'password2')
 
     def validate(self, attrs):
-        """
-        Object-level validation to ensure that both password fields match.
-        """
         if attrs['password'] != attrs['password2']:
             raise serializers.ValidationError({"password": "Password fields didn't match."})
         return attrs
 
     def create(self, validated_data):
-        """
-        Create and return a new user instance after removing the password2 field.
-        """
         validated_data.pop('password2')
         user = User.objects.create_user(**validated_data)
         return user

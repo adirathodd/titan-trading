@@ -52,6 +52,7 @@ function Login() {
         {message}
       </div>
       )}
+
       <h2 className="text-2xl font-bold mb-6 mt-4 text-center text-white">Login</h2>
       <form onSubmit={handleSubmit} className="flex flex-col">
         {/* Username Field */}

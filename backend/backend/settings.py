@@ -19,12 +19,8 @@ load_dotenv()
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.1/howto/deployment/checklist/
-
-# SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-h_vd-k_a=_js2^w!tt8l6v8lh&s^)m@@xg9+e(rhu=uq6ttf@!'
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
@@ -52,7 +48,7 @@ INSTALLED_APPS = [
 
 # CORS Configuration
 CORS_ALLOWED_ORIGINS = [
-    "http://localhost:3000",   # React frontend
+    "http://localhost:3000",
     'http://192.168.0.29:3000'
 ]
 

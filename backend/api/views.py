@@ -199,15 +199,12 @@ class BuyStockView(APIView):
         total_cost = quantity * stock.current_price
 
         with db_transaction.atomic():
-            # Check if user has enough cash
             if user.profile.cash < total_cost:
                 return Response({'error': 'Insufficient balance.'}, status=status.HTTP_400_BAD_REQUEST)
 
-            # Deduct cash
             user.profile.cash -= total_cost
             user.profile.save()
 
-            # Update or create holding
             holding, created = Holding.objects.get_or_create(
                 user=user,
                 ticker=stock,
@@ -224,7 +221,6 @@ class BuyStockView(APIView):
             holding.shares_owned += quantity
             holding.save()
 
-            # Record transaction
             Transaction.objects.create(
                 user=user,
                 stock=stock,
@@ -245,7 +241,6 @@ class SellStockView(APIView):
         stock = generics.get_object_or_404(Stock, ticker=ticker.upper())
 
         try:
-            # Update the stock's current price
             stock.update_current_price()
         except ValueError as e:
             return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
@@ -253,23 +248,19 @@ class SellStockView(APIView):
         total_revenue = quantity * stock.current_price
 
         with db_transaction.atomic():
-            # Check if user has enough shares
             holding = generics.get_object_or_404(Holding, user=user, ticker=stock)
             if holding.shares_owned < quantity:
                 return Response({'error': 'Insufficient shares to sell.'}, status=status.HTTP_400_BAD_REQUEST)
 
-            # Add cash
             user.profile.cash += total_revenue
             user.profile.save()
 
-            # Update holding
             holding.shares_owned -= quantity
             if holding.shares_owned == 0:
                 holding.delete()
             else:
                 holding.save()
 
-            # Record transaction
             Transaction.objects.create(
                 user=user,
                 stock=stock,
