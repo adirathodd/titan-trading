@@ -147,12 +147,12 @@ const Dashboard = () => {
 
       {/* Current Holdings Table */}
       <div>
-        <h2 className="text-2xl font-semibold mb-4 text-gray-900 dark:text-white">Current Holdings</h2>
+        <h2 className="text-2xl font-semibold mb-4 text-gray-900 rounded dark:text-white">Current Holdings</h2>
         {currentHoldings.length === 0 ? (
           <div className="text-center text-gray-500">No holdings available.</div>
         ) : (
           <div className="overflow-x-auto">
-            <table className="min-w-full bg-white dark:bg-gray-700">
+            <table className="min-w-full rounded-lg overflow-hidden bg-white dark:bg-gray-700">
               <thead>
                 <tr>
                   <th className="py-2 px-4 border-b-2 border-gray-200 dark:border-gray-600 text-left text-sm font-semibold text-gray-700 dark:text-gray-200">

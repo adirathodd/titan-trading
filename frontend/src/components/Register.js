@@ -27,9 +27,9 @@ function Register() {
     e.preventDefault();
     setErrors({});
     setIsSubmitting(true);
-    try { // eslint-disable-next-line
+    try {
       const response = await axios.post('http://localhost:8000/api/register/', formData);
-      navigate('/login', { state: { message: 'Account created successfully! Check your email for verification link', username: formData.username } });
+      navigate('/login', { message: response.data.message });
     } catch (error) {
       if (error.response && error.response.data) {
         setErrors(error.response.data);
@@ -116,7 +116,7 @@ function Register() {
 
         <button
           type="submit"
-          className="bg-blue-500 hover:bg-blue-600 text-white font-semibold py-2 px-4 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-600 disabled:opacity-50 disabled:cursor-not-allowed"
+          className="bg-blue-500 mt-5 hover:bg-blue-600 text-white font-semibold py-2 px-4 rounded focus:outline-none focus:ring-2 focus:ring-blue-500 dark:focus:ring-blue-600 disabled:opacity-50 disabled:cursor-not-allowed"
           disabled={isSubmitting}
         >
           {isSubmitting ? 'Registering...' : 'Register'}
