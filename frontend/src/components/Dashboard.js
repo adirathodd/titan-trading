@@ -13,7 +13,7 @@ const Dashboard = () => {
   useEffect(() => {
     const fetchDashboard = async () => {
       try {
-        const response = await axios.get('http://localhost:8000/api/dashboard', {
+        const response = await axios.get('https://titanapi.onrender.com/api/dashboard', {
           headers: {
             'Authorization': `Bearer ${localStorage.getItem('access_token')}`,
           },

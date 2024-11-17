@@ -24,7 +24,7 @@ const Navbar = () => {
 
   const fetchSuggestions = async (query) => {
     try {
-      const response = await axios.get(`http://localhost:8000/api/tickers?query=${query}`);
+      const response = await axios.get(`https://titanapi.onrender.com/api/tickers?query=${query}`);
       setSuggestions(response.data);
       setShowDropdown(true);
     } catch (error) {
@@ -34,7 +34,7 @@ const Navbar = () => {
 
   const validateTicker = async (ticker) => {
     try {
-      const response = await axios.get(`http://localhost:8000/api/search/${ticker}`);
+      const response = await axios.get(`https://titanapi.onrender.com/api/search/${ticker}`);
       if (response.data.stockDetails.valid) {
         navigate(`/stock/${ticker}`);
       } else {
