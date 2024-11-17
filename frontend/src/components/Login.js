@@ -1,16 +1,16 @@
 import React, { useState } from 'react';
 import axios from 'axios';
-import { useNavigate, Navigate } from 'react-router-dom';
+import { useNavigate, Navigate, useLocation } from 'react-router-dom';
 import useAuth from '../hooks/useAuth';
 
 function Login() {
+  const location = useLocation();
+  const { message } = location.state || {};
   const [formData, setFormData] = useState({
     username: '',
     password: '',
   });
   const [error, setError] = useState(''); 
-  // eslint-disable-next-line
-  const [message, setMessage] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const navigate = useNavigate();
   const { auth, login } = useAuth();
@@ -45,10 +45,14 @@ function Login() {
 
   return (
     <div className="max-w-md mx-auto mt-10 p-6 bg-gray-800 shadow-md rounded">
-      {/* Message */}
-      {message && <p className="text-green-500 text-sm mb-4">{error}</p>}
 
-      <h2 className="text-2xl font-bold mb-6 text-center text-white">Login</h2>
+      {/* Message */}
+      {message && (
+      <div className="p-4 mb-5 mt-5 text-green-700 bg-green-100 rounded">
+        {message}
+      </div>
+      )}
+      <h2 className="text-2xl font-bold mb-6 mt-4 text-center text-white">Login</h2>
       <form onSubmit={handleSubmit} className="flex flex-col">
         {/* Username Field */}
         <label htmlFor="username" className="mb-2 font-semibold text-white">Username</label>
@@ -73,7 +77,7 @@ function Login() {
           onChange={handleChange}
           value={formData.password}
           required
-          className="px-3 py-2 bg-gray-700 text-white border border-gray-600 rounded mb-4 focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className="px-3 py-2 bg-gray-700 text-white border border-gray-600 rounded mb-2 *:focus:outline-none focus:ring-2 focus:ring-blue-500"
         />
 
         {/* Error Message */}
@@ -82,7 +86,7 @@ function Login() {
         {/* Submit Button */}
         <button
           type="submit"
-          className="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className="bg-blue-600 hover:bg-blue-700 mt-5 text-white font-semibold py-2 px-4 rounded focus:outline-none focus:ring-2 focus:ring-blue-500"
           disabled={isSubmitting}
         >
           {isSubmitting ? 'Logging in...' : 'Login'}
