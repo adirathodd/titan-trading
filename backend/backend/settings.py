@@ -52,7 +52,9 @@ INSTALLED_APPS = [
 # CORS Configuration
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:3000",
-    'http://192.168.0.29:3000'
+    'http://192.168.0.29:3000',
+    'https://adirathodd.github.io'
+    'https://adirathodd.github.io/titan-2'
 ]
 
 MIDDLEWARE = [
