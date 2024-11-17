@@ -8,13 +8,15 @@ function Login() {
     username: '',
     password: '',
   });
-  const [error, setError] = useState('');
+  const [error, setError] = useState(''); 
+  // eslint-disable-next-line
+  const [message, setMessage] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const navigate = useNavigate();
   const { auth, login } = useAuth();
 
   if (auth.isAuthenticated) {
-    return <Navigate to="/welcome" />;
+    return <Navigate to="/" />;
   }
 
   const handleChange = (e) => {
@@ -43,6 +45,9 @@ function Login() {
 
   return (
     <div className="max-w-md mx-auto mt-10 p-6 bg-gray-800 shadow-md rounded">
+      {/* Message */}
+      {message && <p className="text-green-500 text-sm mb-4">{error}</p>}
+
       <h2 className="text-2xl font-bold mb-6 text-center text-white">Login</h2>
       <form onSubmit={handleSubmit} className="flex flex-col">
         {/* Username Field */}

@@ -2,7 +2,7 @@ from rest_framework import serializers
 from django.contrib.auth.models import User
 from django.contrib.auth.password_validation import validate_password
 from rest_framework.validators import UniqueValidator
-from .models import Stock, Profile, Holding, Transaction
+from .models import Stock, Profile, Holding, Transaction, PortfolioHistory
 
 class RegisterSerializer(serializers.ModelSerializer):
     username = serializers.CharField(
@@ -55,11 +55,13 @@ class StockSerializer(serializers.ModelSerializer):
         fields = ['ticker', 'company_name', 'current_price']
 
 class HoldingSerializer(serializers.ModelSerializer):
-    stock = StockSerializer()
+    ticker = StockSerializer()
+    current_price = serializers.DecimalField(max_digits=20, decimal_places=2, read_only=True)
+    total_value = serializers.DecimalField(max_digits=20, decimal_places=2, read_only=True)
 
     class Meta:
         model = Holding
-        fields = ['stock', 'shares_owned']
+        fields = ['ticker', 'company_name', 'shares_owned', 'average_price', 'current_price', 'total_value']
 
 class TransactionSerializer(serializers.ModelSerializer):
     stock = StockSerializer()
@@ -79,3 +81,12 @@ class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = ['id', 'username', 'email', 'profile']
+
+class PortfolioHistorySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = PortfolioHistory
+        fields = ['date', 'total_value']
+
+class DashboardSerializer(serializers.Serializer):
+    portfolio_history = PortfolioHistorySerializer(many=True)
+    current_holdings = HoldingSerializer(many=True)

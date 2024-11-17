@@ -2,6 +2,7 @@
 
 import csv
 import os
+from decimal import Decimal, InvalidOperation
 from django.core.management.base import BaseCommand, CommandError
 from api.models import Stock
 
@@ -28,17 +29,17 @@ class Command(BaseCommand):
                     self.stdout.write(self.style.WARNING(f'Skipping incomplete row: {row}'))
                     continue
 
-                # Update existing record or create a new one
-                stock, created = Stock.objects.update_or_create(
-                    ticker=ticker,
-                    defaults={'company_name': company_name}
-                )
-
-                if created:
-                    count += 1
-                    # self.stdout.write(self.style.SUCCESS(f'Added new stock: {ticker} - {company_name}'))
-                    self.stdout.write(self.style.SUCCESS(f'Added new stock: {stock.ticker} - {stock.company_name}'))
-                else:
-                    self.stdout.write(self.style.NOTICE(f'Updated stock: {ticker} - {company_name}'))
+                try:
+                    stock, created = Stock.objects.update_or_create(
+                        ticker=ticker,
+                        defaults={'company_name': company_name, 'current_price': 0}
+                    )
+                    if created:
+                        count += 1
+                        self.stdout.write(self.style.SUCCESS(f'Added new stock: {stock.ticker} - {stock.company_name}'))
+                    else:
+                        self.stdout.write(self.style.NOTICE(f'Updated stock: {ticker} - {company_name}'))
+                except Exception as e:
+                    self.stdout.write(self.style.ERROR(f'Error saving stock {ticker}: {e}'))
 
             self.stdout.write(self.style.SUCCESS(f'Import completed. {count} new stocks added.'))

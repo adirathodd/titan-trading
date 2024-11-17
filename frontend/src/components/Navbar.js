@@ -66,16 +66,19 @@ const Navbar = () => {
   };
 
   const handleSelect = (ticker) => {
-    setSearchTerm(ticker);
     setShowDropdown(false);
+    setSuggestions([]);
     validateTicker(ticker);
+    setSearchTerm(ticker);
   };
 
   const handleSubmit = (e) => {
     e.preventDefault();
     if (searchTerm.trim() !== '') {
-      validateTicker(searchTerm.trim());
+      setSuggestions([]);
       setShowDropdown(false);
+      validateTicker(searchTerm.trim());
+      setSearchTerm('');
     }
   };
 

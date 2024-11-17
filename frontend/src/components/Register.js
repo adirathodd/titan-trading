@@ -1,5 +1,3 @@
-// src/components/Register.js
-
 import React, { useState } from 'react';
 import axios from 'axios';
 import { useNavigate, Navigate } from 'react-router-dom';
@@ -18,7 +16,7 @@ function Register() {
   const { auth } = useAuth();
 
   if (auth.isAuthenticated) {
-    return <Navigate to="/welcome" />;
+    return <Navigate to="/" />;
   }
 
   const handleChange = (e) => {
@@ -31,8 +29,7 @@ function Register() {
     setIsSubmitting(true);
     try { // eslint-disable-next-line
       const response = await axios.post('http://localhost:8000/api/register/', formData);
-      alert('Registration successful! Please check your email to verify your account.');
-      navigate('/login');
+      navigate('/login', { state: { message: 'Account created successfully! Check your email for verification link', username: formData.username } });
     } catch (error) {
       if (error.response && error.response.data) {
         setErrors(error.response.data);

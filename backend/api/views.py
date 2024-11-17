@@ -1,6 +1,6 @@
 from django.shortcuts import get_object_or_404
 from rest_framework.permissions import IsAuthenticated
-from rest_framework import generics, status
+from rest_framework import generics, status, permissions
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from django.contrib.auth import authenticate
@@ -8,10 +8,10 @@ from django.contrib.auth.models import User
 from django.utils.http import urlsafe_base64_decode
 from django.utils.encoding import force_str
 from django.contrib.auth.tokens import default_token_generator
-from .serializers import RegisterSerializer, LoginSerializer, StockSerializer
+from .serializers import *
 from .utils import send_verification_email
 from rest_framework_simplejwt.tokens import RefreshToken
-from .models import Profile, Stock, Holding, Transaction
+from .models import *
 import yfinance as yf
 from django.db.models import Q
 from decimal import Decimal
@@ -26,7 +26,6 @@ class RegisterView(generics.CreateAPIView):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         user = serializer.save()
-        Profile.objects.create(user=user)
         send_verification_email(user, request)
         return Response({"message": "User registered successfully. Please check your email to verify your account."}, status=status.HTTP_201_CREATED)
 
@@ -149,7 +148,7 @@ class StockSummary(APIView):
             stockObj = Stock.objects.get(ticker=ticker.upper())
 
             try:
-                holding = Holding.objects.get(user=user.pk, stock=stockObj.pk)
+                holding = Holding.objects.get(user=user.pk, ticker=stockObj.pk)
                 holdings = holding.shares_owned
             except Holding.DoesNotExist:
                 holdings = 0
@@ -211,9 +210,17 @@ class BuyStockView(APIView):
             # Update or create holding
             holding, created = Holding.objects.get_or_create(
                 user=user,
-                stock=stock,
-                defaults={'shares_owned': Decimal('0.0000')}
+                ticker=stock,
+                company_name = stock.company_name,
+                defaults={'shares_owned': Decimal('0.0000'),
+                          'average_price': Decimal(stock.current_price)
+                          }
             )
+            
+            if not created:
+                new_average = ((holding.shares_owned * holding.average_price) + total_cost) / (holding.shares_owned + quantity)
+                holding.average_price = new_average
+            
             holding.shares_owned += quantity
             holding.save()
 
@@ -247,7 +254,7 @@ class SellStockView(APIView):
 
         with db_transaction.atomic():
             # Check if user has enough shares
-            holding = generics.get_object_or_404(Holding, user=user, stock=stock)
+            holding = generics.get_object_or_404(Holding, user=user, ticker=stock)
             if holding.shares_owned < quantity:
                 return Response({'error': 'Insufficient shares to sell.'}, status=status.HTTP_400_BAD_REQUEST)
 
@@ -273,3 +280,23 @@ class SellStockView(APIView):
             )
 
         return Response({'message': 'Stock sold successfully.', 'cash_total': user.profile.cash}, status=status.HTTP_200_OK)
+
+class DashboardView(APIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get(self, request):
+        user = request.user
+
+        portfolio_history_qs = PortfolioHistory.objects.filter(user=user).order_by('date')
+        portfolio_history_serializer = PortfolioHistorySerializer(portfolio_history_qs, many=True)
+
+        current_holdings_qs = Holding.objects.filter(user=user)
+        current_holdings_serializer = HoldingSerializer(current_holdings_qs, many=True)
+
+        dashboard_data = {
+            'portfolio_history': portfolio_history_serializer.data,
+            'current_holdings': current_holdings_serializer.data,
+        }
+
+        serializer = DashboardSerializer(dashboard_data)
+        return Response(serializer.data, status=status.HTTP_200_OK)
