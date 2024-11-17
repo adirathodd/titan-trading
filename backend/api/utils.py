@@ -1,5 +1,3 @@
-# accounts/utils.py
-
 from django.core.mail import EmailMultiAlternatives
 from django.conf import settings
 from django.urls import reverse
@@ -17,22 +15,15 @@ def send_verification_email(user, request):
     verification_link = f"http://localhost:3000/verify/{uid}/{token}/"
     
     subject = 'Verify Your Email'
-    from_email = 'Titan Paper Trading Platform <no-reply@titan.com>'  # Replace with your domain
+    from_email = 'Titan Paper Trading Platform <no-reply@titan.com>' 
     to_email = user.email
     
-    # Current year for the footer
-    current_year = datetime.now().year
-    
-    # Render HTML content
     html_content = render_to_string('api/verification_email.html', {
         'user': user,
         'verification_link': verification_link,
-        'current_year': current_year,
+        'current_year': datetime.now().year,
     })
-    
-    # Create the email
+
     email = EmailMultiAlternatives(subject, '', from_email, [to_email])
     email.attach_alternative(html_content, "text/html")
-    
-    # Send the email
     email.send()

@@ -29,7 +29,7 @@ function Register() {
     setIsSubmitting(true);
     try {
       const response = await axios.post('http://localhost:8000/api/register/', formData);
-      navigate('/login', { message: response.data.message });
+      navigate('/login', { state: {message: response.data.message }});
     } catch (error) {
       if (error.response && error.response.data) {
         setErrors(error.response.data);

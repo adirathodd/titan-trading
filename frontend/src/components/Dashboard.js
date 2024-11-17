@@ -1,5 +1,3 @@
-// src/components/Dashboard.js
-
 import axios from 'axios';
 import React, { useEffect, useState, useMemo } from 'react';
 import { Line } from 'react-chartjs-2';
@@ -24,7 +22,7 @@ const Dashboard = () => {
         setCurrentHoldings(response.data.current_holdings);
         setLoading(false);
       } catch (err) {
-        console.error(err); // Log the actual error for debugging
+        console.error(err);
         setError('Failed to load dashboard.');
         setLoading(false);
       }
@@ -33,7 +31,6 @@ const Dashboard = () => {
     fetchDashboard();
   }, []);
 
-  // Calculate current portfolio value and percentage change
   const { currentValue, percentageChange } = useMemo(() => {
     if (portfolioHistory.length === 0) {
       return { currentValue: 0, percentageChange: 0 };
@@ -61,7 +58,7 @@ const Dashboard = () => {
         fill: true,
         backgroundColor: 'rgba(75,192,192,0.2)',
         borderColor: 'rgba(75,192,192,1)',
-        tension: 0.4, // Smooth curves
+        tension: 0.4,
       },
     ],
   }), [portfolioHistory]);
@@ -72,7 +69,7 @@ const Dashboard = () => {
       legend: {
         position: 'top',
         labels: {
-          color: '#FFFFFF', // Adjust based on your theme
+          color: '#FFFFFF',
         },
       },
       title: {
