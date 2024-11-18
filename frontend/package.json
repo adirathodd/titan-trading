@@ -2,7 +2,7 @@
   "name": "frontend",
   "version": "0.1.0",
   "private": true,
-  "homepage": "https://titan-2.onrender.com",
+  "homepage": "https://titan-sabm.onrender.com",
   "dependencies": {
     "@craco/craco": "^7.1.0",
     "@heroicons/react": "^1.0.6",
