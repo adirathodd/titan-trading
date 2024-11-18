@@ -48,7 +48,7 @@ function Login() {
 
       {/* Message */}
       {message && (
-      <div className="p-4 mb-5 mt-5 text-green-700 bg-green-100 rounded">
+      <div className="p-4 mb-5 mt-5 text-gray-700 bg-green-100 rounded">
         {message}
       </div>
       )}

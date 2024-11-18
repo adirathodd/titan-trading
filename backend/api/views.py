@@ -68,15 +68,9 @@ class VerifyEmail(APIView):
             profile.is_email_verified = True
             profile.save()
 
-            # Generate JWT tokens
-            refresh = RefreshToken.for_user(user)
-            access = refresh.access_token
-
             # Return tokens to frontend
             return Response({
-                'message': 'Email verified successfully.',
-                'refresh': str(refresh),
-                'access': str(access),
+                'message': 'Email verified successfully.'
             }, status=status.HTTP_200_OK)
         else:
             return Response({'error': 'Invalid verification link.'}, status=status.HTTP_400_BAD_REQUEST)

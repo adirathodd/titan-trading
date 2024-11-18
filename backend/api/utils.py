@@ -12,7 +12,7 @@ from datetime import datetime
 def send_verification_email(user, request):
     token = default_token_generator.make_token(user)
     uid = urlsafe_base64_encode(force_bytes(user.pk))
-    verification_link = f"https://titan-edla.onrender.com/verify/{uid}/{token}/"
+    verification_link = f"https://titan-yl7h.onrender.com/verify/{uid}/{token}/"
     
     subject = 'Verify Your Email'
     from_email = 'Titan Paper Trading Platform <no-reply@titan.com>' 
