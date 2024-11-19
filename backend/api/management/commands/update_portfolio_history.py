@@ -15,7 +15,7 @@ class Command(BaseCommand):
         for user in users:
             # Check if today's portfolio history already exists
             if not PortfolioHistory.objects.filter(user=user, date=today).exists():
-                total_value = user.profile.cash
+                total_value = float(user.profile.cash)
                 holdings = Holding.objects.filter(user=user)
                 for holding in holdings:
                     current_price = holding.current_price()
