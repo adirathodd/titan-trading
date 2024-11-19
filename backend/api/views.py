@@ -2,6 +2,7 @@ from django.shortcuts import get_object_or_404
 from rest_framework.permissions import IsAuthenticated
 from rest_framework import generics, status, permissions
 from rest_framework.views import APIView
+from django.core.management import call_command
 from rest_framework.response import Response
 from django.contrib.auth import authenticate
 from django.contrib.auth.models import User
@@ -34,6 +35,7 @@ class LoginView(APIView):
     serializer_class = LoginSerializer
 
     def post(self, request):
+        call_command('update_portfolio_history')
         serializer = self.serializer_class(data=request.data)
         serializer.is_valid(raise_exception=True)
         username = serializer.validated_data['username']
