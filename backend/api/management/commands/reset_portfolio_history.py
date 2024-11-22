@@ -1,9 +1,8 @@
-# your_app/management/commands/reset_portfolio_history.py
-
 from django.core.management.base import BaseCommand
 from django.contrib.auth.models import User
 from api.models import PortfolioHistory, Holding
 from datetime import timedelta, date
+import yfinance as yf
 
 class Command(BaseCommand):
     help = 'Resets all PortfolioHistory and initializes with a starting valuation of $10,000'
@@ -12,38 +11,55 @@ class Command(BaseCommand):
         today = date.today()
         initial_total_value = 10000
 
+        # Clear all existing PortfolioHistory
         PortfolioHistory.objects.all().delete()
         self.stdout.write(self.style.SUCCESS('All PortfolioHistory entries have been deleted.'))
 
+        # Fetch all users
         users = User.objects.all()
         for user in users:
             start_date = user.date_joined.date()
             current_date = start_date
 
             while current_date <= today:
+                # Skip if an entry for the current date already exists
                 if not PortfolioHistory.objects.filter(user=user, date=current_date).exists():
                     if current_date == start_date:
                         total_value = initial_total_value
                     else:
                         previous_date = current_date - timedelta(days=1)
-                        total_value = float(user.profile.cash)
+                        total_value = float(user.profile.cash)  # Start with cash balance
 
+                        # Fetch holdings for the user
                         holdings = Holding.objects.filter(user=user)
                         for holding in holdings:
                             try:
-                                current_price = holding.current_price()
-                                total_value += (float(holding.shares_owned) * float(current_price))
+                                # Fetch historical closing price for the specific date using yfinance
+                                ticker_data = yf.Ticker(holding.ticker.ticker)
+                                historical_data = ticker_data.history(start=current_date, end=current_date + timedelta(days=1))
+
+                                if not historical_data.empty:
+                                    closing_price = historical_data['Close'][0]
+                                    total_value += float(holding.shares_owned) * float(closing_price)
+                                else:
+                                    self.stderr.write(
+                                        f"No closing price available for {holding.ticker} on {current_date}."
+                                    )
                             except Exception as e:
                                 self.stderr.write(f'Error fetching price for {holding.ticker}: {e}')
                                 total_value += 0
 
+                    # Create PortfolioHistory for the current date
                     PortfolioHistory.objects.create(
                         user=user,
                         date=current_date,
                         total_value=total_value
                     )
-                    self.stdout.write(self.style.SUCCESS(f'PortfolioHistory for {user.username} on {current_date} created.'))
-                
+                    self.stdout.write(self.style.SUCCESS(
+                        f'PortfolioHistory for {user.username} on {current_date} created.'
+                    ))
+
+                # Move to the next date
                 current_date += timedelta(days=1)
 
         self.stdout.write(self.style.SUCCESS('PortfolioHistory reset and updated successfully.'))
