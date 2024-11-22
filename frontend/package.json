@@ -2,7 +2,7 @@
   "name": "frontend",
   "version": "0.1.0",
   "private": true,
-  "homepage": "https://titan-2-production.up.railway.app/",
+  "homepage": "https://adirathodd.github.io/titan-2/",
   "dependencies": {
     "@craco/craco": "^7.1.0",
     "@heroicons/react": "^1.0.6",
@@ -26,6 +26,8 @@
     "web-vitals": "^2.1.4"
   },
   "scripts": {
+    "predeploy": "npm run build",
+    "deploy": "gh-pages -d build",
     "start": "craco start",
     "build": "craco build",
     "test": "craco test",
@@ -56,6 +58,7 @@
   "devDependencies": {
     "@babel/plugin-proposal-private-property-in-object": "^7.21.11",
     "autoprefixer": "^10.4.20",
+    "gh-pages": "^6.2.0",
     "postcss": "^8.4.47",
     "tailwindcss": "^3.4.14"
   }
