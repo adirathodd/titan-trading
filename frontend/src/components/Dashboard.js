@@ -13,7 +13,7 @@ const Dashboard = () => {
   useEffect(() => {
     const fetchDashboard = async () => {
       try {
-        const response = await axios.get('https://titanapi.onrender.com/api/dashboard', {
+        const response = await axios.get('https://stale-goldi-titan-trading-bcb085f8.koyeb.app/api/dashboard', {
           headers: {
             'Authorization': `Bearer ${localStorage.getItem('access_token')}`,
           },

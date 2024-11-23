@@ -12,7 +12,7 @@ function VerifyEmail() {
   useEffect(() => {
     const verifyEmail = async () => {
       try {
-        const response = await axios.get(`https://titanapi.onrender.com/api/verify/${uidb64}/${token}/`);
+        const response = await axios.get(`https://stale-goldi-titan-trading-bcb085f8.koyeb.app/api/verify/${uidb64}/${token}/`);
         setMessage(response.data.message);
         setTimeout(() => {
           navigate('/login');

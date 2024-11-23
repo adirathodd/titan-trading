@@ -28,7 +28,7 @@ function Login() {
     setError('');
     setIsSubmitting(true);
     try {
-      const response = await axios.post('https://titanapi.onrender.com/api/login/', formData);
+      const response = await axios.post('https://stale-goldi-titan-trading-bcb085f8.koyeb.app/api/login/', formData);
       const { access, refresh, username, cash } = response.data;
       login(access, refresh, username, cash );
       navigate('/');

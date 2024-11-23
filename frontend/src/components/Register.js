@@ -28,7 +28,7 @@ function Register() {
     setErrors({});
     setIsSubmitting(true);
     try {
-      const response = await axios.post('https://titanapi.onrender.com/api/register/', formData);
+      const response = await axios.post('https://stale-goldi-titan-trading-bcb085f8.koyeb.app/api/register/', formData);
       navigate('/login', { state: {message: response.data.message }});
     } catch (error) {
       if (error.response && error.response.data) {

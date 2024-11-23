@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 const axiosInstance = axios.create({
-  baseURL: 'https://titanapi.onrender.com/api/',
+  baseURL: 'https://stale-goldi-titan-trading-bcb085f8.koyeb.app/api/',
 });
 
 axiosInstance.interceptors.request.use(
