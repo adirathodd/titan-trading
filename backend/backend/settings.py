@@ -33,7 +33,8 @@ STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 ALLOWED_HOSTS = [
     'titanapi.onrender.com',
     'localhost',
-    '127.0.0.1'
+    '127.0.0.1',
+    'stale-goldi-titan-trading-bcb085f8.koyeb.app'
 ]
 
 # Application definition
