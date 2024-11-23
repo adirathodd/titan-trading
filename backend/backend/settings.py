@@ -28,6 +28,8 @@ SECRET_KEY = os.getenv("DJANGO_SECRET_KEY")
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
+STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
+
 ALLOWED_HOSTS = [
     'titanapi.onrender.com',
     'localhost',
