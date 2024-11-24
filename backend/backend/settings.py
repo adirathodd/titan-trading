@@ -103,8 +103,12 @@ WSGI_APPLICATION = 'backend.wsgi.application'
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+        'ENGINE': 'django.db.backends.postgresql_psycopg2',
+        'NAME': 'defaultdb', 
+        'USER': 'avnadmin',
+        'PASSWORD': os.getenv('SEC_DB_PASSWORD'),
+        'HOST': 'titan-adirathodd.l.aivencloud.com', 
+        'PORT': '11998',
     }
 }
 
@@ -124,10 +128,6 @@ AUTH_PASSWORD_VALIDATORS = [
     {
         'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator',
     },
-]
-
-CRONJOBS = [
-    ('0 0 * * *', 'api.management.commands.update_portfolio_history.Command'),
 ]
 
 # Internationalization
