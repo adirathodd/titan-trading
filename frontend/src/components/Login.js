@@ -34,7 +34,7 @@ function Login() {
       navigate('/');
     } catch (error) {
       if (error.response && error.response.data) {
-        setError(error.response.data.detail || 'Login failed.');
+        setError(error.response.data.detail || 'Invalid username or password.');
       } else {
         setError('An unexpected error occurred. Please try again.');
       }
