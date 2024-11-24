@@ -35,7 +35,6 @@ class LoginView(APIView):
     serializer_class = LoginSerializer
 
     def post(self, request):
-        call_command('update_portfolio_history')
         serializer = self.serializer_class(data=request.data)
         serializer.is_valid(raise_exception=True)
         username = serializer.validated_data['username']
