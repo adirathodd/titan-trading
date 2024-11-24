@@ -44,8 +44,7 @@ function Login() {
   };
 
   return (
-    <div className="max-w-md mx-auto mt-10 p-6 bg-gray-800 shadow-md rounded">
-
+    <div className="max-w-md items-center justify-center mx-auto mt-52 p-6 bg-gray-800 shadow-md rounded">
       {/* Message */}
       {message && (
       <div className="p-4 mb-5 mt-5 text-gray-700 bg-green-100 rounded">

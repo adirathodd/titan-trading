@@ -38,7 +38,7 @@ const Dashboard = () => {
 
     const sortedHistory = [...portfolioHistory].sort((a, b) => new Date(a.date) - new Date(b.date));
     const latest = sortedHistory[sortedHistory.length - 1];
-    const previous = sortedHistory.length > 1 ? sortedHistory[sortedHistory.length - 2] : null;
+    const previous = sortedHistory.length > 1 ? sortedHistory[0] : null;
 
     const currentVal = Number(latest.total_value);
     const previousVal = previous ? Number(previous.total_value) : 0;
@@ -133,7 +133,7 @@ const Dashboard = () => {
           <span className={`text-lg font-semibold ${percentageChange >= 0 ? 'text-green-600' : 'text-red-600'}`}>
             {percentageChange >= 0 ? '▲' : '▼'} {percentageChange.toFixed(2)}%
           </span>
-          <span className="ml-2 text-gray-600 dark:text-gray-300">from previous day</span>
+          <span className="ml-2 text-gray-600 dark:text-gray-300">All time</span>
         </div>
       </div>
 
