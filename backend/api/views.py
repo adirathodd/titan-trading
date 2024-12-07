@@ -14,7 +14,7 @@ from .utils import send_verification_email
 from rest_framework_simplejwt.tokens import RefreshToken
 from .models import *
 import yfinance as yf
-from django.db.models import Q
+from django.db.models import Q, Case, When, IntegerField
 from decimal import Decimal
 from django.db import transaction as db_transaction
 import math
@@ -172,9 +172,15 @@ class TickerSuggestionsAPIView(APIView):
                 status=status.HTTP_400_BAD_REQUEST
             )
         
-        stocks = Stock.objects.filter(
-            Q(ticker__icontains=query)
-        ).order_by('ticker')[:10]
+        stocks = Stock.objects.annotate(
+        priority=Case(
+            When(ticker__iexact=query, then=1),
+            default=0,
+            output_field=IntegerField(),
+        )
+        ).filter(
+            Q(ticker__icontains=query) | Q(company_name__icontains=query)
+        ).order_by('-priority', 'ticker')[:10] 
         
         serializer = StockSerializer(stocks, many=True)
         return Response(serializer.data, status=status.HTTP_200_OK)
