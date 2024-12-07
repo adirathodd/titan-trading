@@ -173,7 +173,7 @@ class TickerSuggestionsAPIView(APIView):
             )
         
         stocks = Stock.objects.filter(
-            Q(ticker__icontains=query) | Q(company_name__icontains=query)
+            Q(ticker__icontains=query)
         ).order_by('ticker')[:10]
         
         serializer = StockSerializer(stocks, many=True)
