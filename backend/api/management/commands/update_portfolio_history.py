@@ -4,9 +4,14 @@ from django.core.management.base import BaseCommand
 from django.contrib.auth.models import User
 from api.models import Holding, PortfolioHistory, Stock
 from django.utils import timezone
-from datetime import timedelta, datetime
+from datetime import timedelta
 import yfinance as yf
 from decimal import Decimal
+import pandas as pd
+from django.db import transaction
+import logging
+
+logger = logging.getLogger(__name__)
 
 class Command(BaseCommand):
     help = 'Updates PortfolioHistory for all users for all missing dates'
@@ -22,28 +27,53 @@ class Command(BaseCommand):
                 PortfolioHistory.objects.filter(user=user).values_list('date', flat=True)
             )
 
-            prev_data = {}
-
             first_portfolio = PortfolioHistory.objects.filter(user=user).order_by('date').first()
-            start_date = first_portfolio.date if first_portfolio else timezone.now().date()
-            start_date = start_date
+            start_date = first_portfolio.date if first_portfolio else today
 
-            current_date = start_date
-            while current_date <= today:
-                if current_date not in existing_dates:
+            holdings = Holding.objects.filter(user=user).select_related('ticker')
+            tickers = holdings.values_list('ticker__ticker', flat=True).distinct()
+
+            if not tickers:
+                self.stdout.write(f'No holdings found for user: {user.username}. Skipping.')
+                continue
+
+            # Fetch historical data for all tickers at once
+            try:
+                historical_data = yf.download(
+                    tickers=list(tickers),
+                    start=start_date - timedelta(days=365),  # Adjust range as needed
+                    end=today + timedelta(days=1),
+                    group_by='ticker',
+                    auto_adjust=True
+                )
+            except Exception as e:
+                logger.error(f'Error fetching data for user {user.username}: {e}')
+                self.stdout.write(
+                    self.style.ERROR(
+                        f'Error fetching data for user {user.username}: {e}'
+                    )
+                )
+                continue
+
+            for current_date in pd.date_range(start=start_date, end=today):
+                date = current_date.date()
+                if date in existing_dates:
+                    continue
+
+                with transaction.atomic():
                     total_value = Decimal(user.profile.cash)
-                    holdings = Holding.objects.filter(user=user)
-
                     for holding in holdings:
                         ticker = holding.ticker.ticker
-                        price = self.get_stock_price(ticker, current_date)
-                        if price is None:
-                            if ticker in prev_data:
-                                price = prev_data[ticker]
-                            else:
+                        try:
+                            price = historical_data[ticker].loc[date]['Close']
+                        except KeyError:
+                            # Find the last available price before the date
+                            try:
+                                price = historical_data[ticker].loc[:date]['Close'].iloc[-1]
+                            except (KeyError, IndexError):
                                 self.stdout.write(
                                     self.style.WARNING(
-                                        f'No price found for {ticker} on {current_date}. Skipping holding.'
+                                        f'No price found for {ticker} on or before {date}. Skipping holding.'
                                     )
                                 )
                                 continue
@@ -54,29 +84,12 @@ class Command(BaseCommand):
                     # Create PortfolioHistory entry
                     PortfolioHistory.objects.create(
                         user=user,
-                        date=current_date,
+                        date=date,
                         total_value=total_value
                     )
 
-                    prev_data[ticker] = price
-
                     self.stdout.write(
                         self.style.SUCCESS(
-                            f'Updated portfolio for {user.username} on {current_date}'
+                            f'Updated portfolio for {user.username} on {date}'
                         )
                     )
-                current_date += timedelta(days=1)
-
-    def get_stock_price(self, ticker, target_date):
-        """
-        Retrieves the stock price for the given ticker on the target_date.
-        If not available, fetches the most recent previous price.
-        """
-        ticker_data = yf.Ticker(ticker)
-
-        historical_data = ticker_data.history(start=target_date, end=target_date + timedelta(days=1))
-
-        if historical_data.empty:
-            return None
-        
-        return historical_data['Close'][0]

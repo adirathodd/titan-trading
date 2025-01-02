@@ -5,7 +5,7 @@ from datetime import timedelta, date
 import yfinance as yf
 
 class Command(BaseCommand):
-    help = 'Resets all PortfolioHistory and initializes with a starting valuation of $10,000'
+    help = 'Resets all Portfolio History and initializes with a starting valuation of $10,000'
 
     def handle(self, *args, **kwargs):
         today = date.today()
