@@ -1,95 +1,80 @@
-# api/management/commands/update_portfolio_history.py
-
 from django.core.management.base import BaseCommand
 from django.contrib.auth.models import User
-from api.models import Holding, PortfolioHistory, Stock
-from django.utils import timezone
-from datetime import timedelta
+from api.models import PortfolioHistory, Holding
+from datetime import timedelta, date
 import yfinance as yf
-from decimal import Decimal
-import pandas as pd
-from django.db import transaction
-import logging
-
-logger = logging.getLogger(__name__)
 
 class Command(BaseCommand):
-    help = 'Updates PortfolioHistory for all users for all missing dates'
+    help = 'Updates Portfolio History from the last recorded date until today'
 
     def handle(self, *args, **kwargs):
-        today = timezone.now().date()
+        today = date.today()
+
+        # Fetch all users
         users = User.objects.all()
-
         for user in users:
-            self.stdout.write(f'Processing user: {user.username}')
+            # Determine the starting date for updating:
+            last_history = PortfolioHistory.objects.filter(user=user).order_by('-date').first()
+            if last_history:
+                start_date = last_history.date + timedelta(days=1)
+                self.stdout.write(self.style.SUCCESS(
+                    f"Updating {user.username}'s history starting from {start_date}"
+                ))
+            else:
+                # If no history exists, default to user's join date
+                start_date = user.date_joined.date()
+                self.stdout.write(self.style.WARNING(
+                    f"No existing history for {user.username}. Starting from date_joined: {start_date}"
+                ))
 
-            existing_dates = set(
-                PortfolioHistory.objects.filter(user=user).values_list('date', flat=True)
-            )
+            current_date = start_date
+            prev_data = {}  # Store last known closing prices for fallback
 
-            first_portfolio = PortfolioHistory.objects.filter(user=user).order_by('date').first()
-            start_date = first_portfolio.date if first_portfolio else today
+            while current_date <= today:
+                # Skip if an entry for the current date already exists
+                if PortfolioHistory.objects.filter(user=user, date=current_date).exists():
+                    self.stdout.write(self.style.WARNING(
+                        f'PortfolioHistory for {user.username} on {current_date} already exists. Skipping.'
+                    ))
+                else:
+                    total_value = float(user.profile.cash)  # Begin with cash balance
 
-            holdings = Holding.objects.filter(user=user).select_related('ticker')
-            tickers = holdings.values_list('ticker__ticker', flat=True).distinct()
-
-            if not tickers:
-                self.stdout.write(f'No holdings found for user: {user.username}. Skipping.')
-                continue
-
-            # Fetch historical data for all tickers at once
-            try:
-                historical_data = yf.download(
-                    tickers=list(tickers),
-                    start=start_date - timedelta(days=365),  # Adjust range as needed
-                    end=today + timedelta(days=1),
-                    group_by='ticker',
-                    auto_adjust=True
-                )
-            except Exception as e:
-                logger.error(f'Error fetching data for user {user.username}: {e}')
-                self.stdout.write(
-                    self.style.ERROR(
-                        f'Error fetching data for user {user.username}: {e}'
-                    )
-                )
-                continue
-
-            for current_date in pd.date_range(start=start_date, end=today):
-                date = current_date.date()
-                if date in existing_dates:
-                    continue
-
-                with transaction.atomic():
-                    total_value = Decimal(user.profile.cash)
+                    # Fetch user's holdings
+                    holdings = Holding.objects.filter(user=user)
                     for holding in holdings:
-                        ticker = holding.ticker.ticker
                         try:
-                            price = historical_data[ticker].loc[date]['Close']
-                        except KeyError:
-                            # Find the last available price before the date
-                            try:
-                                price = historical_data[ticker].loc[:date]['Close'].iloc[-1]
-                            except (KeyError, IndexError):
-                                self.stdout.write(
-                                    self.style.WARNING(
-                                        f'No price found for {ticker} on or before {date}. Skipping holding.'
-                                    )
+                            ticker_symbol = holding.ticker.ticker
+                            ticker_obj = yf.Ticker(ticker_symbol)
+                            # Get historical data for the current day
+                            historical_data = ticker_obj.history(start=current_date, end=current_date + timedelta(days=1))
+
+                            if not historical_data.empty:
+                                closing_price = historical_data['Close'].iloc[0]
+                            elif ticker_symbol in prev_data:
+                                closing_price = prev_data[ticker_symbol]
+                            else:
+                                self.stderr.write(
+                                    f"No closing price available for {ticker_symbol} on {current_date}."
                                 )
                                 continue
 
-                        holding_total = Decimal(holding.shares_owned) * Decimal(price)
-                        total_value += holding_total
+                            prev_data[ticker_symbol] = closing_price
+                            total_value += float(holding.shares_owned) * float(closing_price)
+                        except Exception as e:
+                            self.stderr.write(f'Error fetching price for {holding.ticker}: {e}')
+                            continue
 
-                    # Create PortfolioHistory entry
+                    # Create a new PortfolioHistory entry for the current date
                     PortfolioHistory.objects.create(
                         user=user,
-                        date=date,
+                        date=current_date,
                         total_value=total_value
                     )
+                    self.stdout.write(self.style.SUCCESS(
+                        f'PortfolioHistory for {user.username} on {current_date} created.'
+                    ))
 
-                    self.stdout.write(
-                        self.style.SUCCESS(
-                            f'Updated portfolio for {user.username} on {date}'
-                        )
-                    )
+                # Move to the next day
+                current_date += timedelta(days=1)
+
+        self.stdout.write(self.style.SUCCESS('PortfolioHistory updated successfully.'))

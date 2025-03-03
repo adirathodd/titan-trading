@@ -1,5 +1,3 @@
-# your_app/management/commands/import_stocks.py
-
 import csv
 import os
 from decimal import Decimal, InvalidOperation
