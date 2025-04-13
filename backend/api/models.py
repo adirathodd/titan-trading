@@ -2,6 +2,7 @@ from decimal import Decimal
 from django.db import models
 from django.contrib.auth.models import User
 from django.core.validators import MinValueValidator
+import yfinance as yf
 
 class Stock(models.Model):
     ticker = models.CharField(max_length=10, unique=True)
@@ -89,17 +90,14 @@ class Holding(models.Model):
     )
     average_price = models.DecimalField(max_digits=20, decimal_places=2)
 
-    @property
     def current_price(self):
         try:
-            info = self.ticker_data.info
-            latest_price = (info.get('currentPrice') or 
-                            info.get('ask') or 
-                            info.get('regularMarketPreviousClose'))
+            ticker_data = yf.Ticker(self.ticker.ticker)
+            latest_price = ticker_data.info.get('currentPrice') or ticker_data.info.get('ask') or ticker_data.info.get('regularMarketPreviousClose')
+            return float(latest_price)
         except Exception as e:
-            print(f"Error fetching ticker info for {self.ticker_symbol}: {e}")
-            latest_price = None
-        return latest_price
+            print(f"Could not fetch latest price for ticker {self.ticker}: {e}")
+            return 0.0
 
     def total_value(self):
         return float(self.shares_owned) * self.current_price()
