@@ -52,17 +52,7 @@ INSTALLED_APPS = [
     'rest_framework.authtoken'
 ]
 
-CRONJOBS = [
-    ('0 0 * * *', 'django.core.management.call_command', ['add_history']),
-]
-
 # CORS Configuration
-CORS_ALLOWED_ORIGINS = [
-    "http://localhost:3000",
-    'http://192.168.0.29:3000',
-    'https://adirathodd.github.io'
-]
-
 CORS_ALLOW_ALL_ORIGINS = True
 
 MIDDLEWARE = [
