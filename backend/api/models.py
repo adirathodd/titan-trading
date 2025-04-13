@@ -89,14 +89,17 @@ class Holding(models.Model):
     )
     average_price = models.DecimalField(max_digits=20, decimal_places=2)
 
+    @property
     def current_price(self):
-        import yfinance as yf
-        ticker_data = yf.Ticker(self.ticker.ticker)
-        latest_price = ticker_data.info.get('currentPrice') or ticker_data.info.get('ask') or ticker_data.info.get('regularMarketPreviousClose')
-        if latest_price is not None:
-            return float(latest_price)
-        else:
-            raise ValueError(f"Could not fetch latest price for ticker {self.ticker}")
+        try:
+            info = self.ticker_data.info
+            latest_price = (info.get('currentPrice') or 
+                            info.get('ask') or 
+                            info.get('regularMarketPreviousClose'))
+        except Exception as e:
+            print(f"Error fetching ticker info for {self.ticker_symbol}: {e}")
+            latest_price = None
+        return latest_price
 
     def total_value(self):
         return float(self.shares_owned) * self.current_price()
