@@ -4,6 +4,9 @@
   "private": true,
   "homepage": "https://titan-hazel.vercel.app/",
   "dependencies": {
+    "@capacitor/cli": "^7.2.0",
+    "@capacitor/core": "^7.2.0",
+    "@capacitor/ios": "^7.2.0",
     "@craco/craco": "^7.1.0",
     "@heroicons/react": "^1.0.6",
     "@material-tailwind/react": "^2.1.10",
