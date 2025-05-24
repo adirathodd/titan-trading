@@ -77,6 +77,8 @@ const StockSummary = () => {
 
     if (ticker) {
       fetchStockData();
+      const intervalId = setInterval(fetchStockData, 30000); // Poll every 5 seconds
+      return () => clearInterval(intervalId);
     }
   }, [ticker, selectedPeriod]);
 

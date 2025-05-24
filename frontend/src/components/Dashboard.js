@@ -29,6 +29,8 @@ const Dashboard = () => {
     };
 
     fetchDashboard();
+    const intervalId = setInterval(fetchDashboard, 30000); // Poll every 5 seconds
+    return () => clearInterval(intervalId);
   }, []);
 
   const { currentValue, percentageChange } = useMemo(() => {
